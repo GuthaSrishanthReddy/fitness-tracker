@@ -1,11 +1,36 @@
+import { BrowserRouter } from "react-router-dom";
 
-function App() {
+/* Routes */
+import AppRoutes from "./routes";
 
+/* Context Providers */
+import { AuthProvider } from "./context/AuthContext";
+import { UserProvider } from "./context/UserContext";
+import { TrainerProvider } from "./context/TrainerContext";
+import { ChatbotProvider } from "./context/ChatbotContext";
+import { ThemeProvider } from "./context/ThemeContext";
+
+/* Global styles */
+import "./styles/globals.css";
+import "./styles/themes.css";
+import "./styles/variables.css";
+
+const App = () => {
   return (
-    <>
-     <h1>Ain't stooping until I build!</h1>
-    </>
-  )
-}
+    <BrowserRouter>
+      <ThemeProvider>
+        <AuthProvider>
+          <UserProvider>
+            <TrainerProvider>
+              <ChatbotProvider>
+                <AppRoutes />
+              </ChatbotProvider>
+            </TrainerProvider>
+          </UserProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </BrowserRouter>
+  );
+};
 
 export default App;
