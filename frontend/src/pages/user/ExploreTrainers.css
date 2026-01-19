@@ -1,0 +1,12 @@
+.explore-trainers {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.explore-trainers__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.5rem;
+}
+

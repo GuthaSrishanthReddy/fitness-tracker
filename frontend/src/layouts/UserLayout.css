@@ -1,0 +1,8 @@
+.user-layout {
+  min-height: 100vh;
+  position: relative;
+}
+
+.user-layout__content {
+  padding: 1.5rem;
+}
