@@ -1,0 +1,10 @@
+.health-metric-chart {
+  padding: 1rem;
+  border-radius: 8px;
+  background: #f5f5f5;
+}
+
+.health-metric-chart__placeholder {
+  height: 200px;
+  background: #e0e0e0;
+}

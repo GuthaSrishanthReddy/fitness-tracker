@@ -1,0 +1,8 @@
+.trainer-layout {
+  min-height: 100vh;
+  background-color: var(--trainer-bg, #f7f7f7);
+}
+
+.trainer-layout__content {
+  padding: 2rem;
+}

@@ -1,0 +1,39 @@
+.home {
+  min-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.home__title {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.home__subtitle {
+  color: #666;
+  margin-bottom: 2rem;
+}
+
+.home__actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.home__btn {
+  padding: 0.75rem 1.5rem;
+  text-decoration: none;
+  border-radius: 6px;
+}
+
+.home__btn--primary {
+  background-color: #000;
+  color: #fff;
+}
+
+.home__btn--secondary {
+  border: 1px solid #000;
+  color: #000;
+}

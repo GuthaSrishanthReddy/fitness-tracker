@@ -1,0 +1,9 @@
+.update-progress {
+  max-width: 500px;
+}
+
+.update-progress__form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
