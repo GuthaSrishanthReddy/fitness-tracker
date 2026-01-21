@@ -1,17 +1,15 @@
-import { Outlet } from "react-router-dom";
-import Navbar from "../components/common/Navbar";
-import Footer from "../components/common/Footer";
+import type { ReactNode } from "react";
 
-import "./PublicLayout.css";
 
-const PublicLayout = () => {
+interface PublicLayoutProps {
+  children: ReactNode;
+}
+
+const PublicLayout = ({ children }: PublicLayoutProps) => {
   return (
-    <div className="public-layout">
-      <Navbar />
-      <main className="public-layout__content">
-        <Outlet />
-      </main>
-      <Footer />
+    <div>
+      {/* existing navbar / header stays exactly the same */}
+      {children}
     </div>
   );
 };

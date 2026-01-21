@@ -1,24 +1,43 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../hooks/useAuth";
+import { registerApi } from "../../services/auth.service";
 
 import "./Signup.css";
 
 const Signup = () => {
   const navigate = useNavigate();
-  const { signup } = useAuth();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<"USER" | "TRAINER">("USER");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+    setLoading(true);
 
-    await signup({ name, email, password, role });
+    try {
+      const res = await registerApi({
+        name,
+        email,
+        password,
+        role,
+      });
 
-    navigate(role === "USER" ? "/user/progress" : "/trainer/clients");
+      // If backend returns token, store it
+      if ((res as any)?.token) {
+        localStorage.setItem("token", (res as any).token);
+      }
+
+      navigate(role === "USER" ? "/user/progress" : "/trainer/clients");
+    } catch (err: any) {
+      setError(err.message || "Signup failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -50,12 +69,19 @@ const Signup = () => {
           required
         />
 
-        <select value={role} onChange={(e) => setRole(e.target.value as any)}>
+        <select
+          value={role}
+          onChange={(e) => setRole(e.target.value as "USER" | "TRAINER")}
+        >
           <option value="USER">User</option>
           <option value="TRAINER">Trainer</option>
         </select>
 
-        <button type="submit">Sign Up</button>
+        {error && <p className="signup__error">{error}</p>}
+
+        <button type="submit" disabled={loading}>
+          {loading ? "Creating..." : "Sign Up"}
+        </button>
       </form>
     </div>
   );
