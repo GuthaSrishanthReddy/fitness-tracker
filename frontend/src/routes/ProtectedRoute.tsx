@@ -1,16 +1,28 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import type { ReactNode } from "react";
 
-const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
-  const { isAuthenticated, loading } = useAuth();
+type Role = "USER" | "TRAINER";
 
-  if (loading) return null; // or Loader
+interface ProtectedRouteProps {
+  children: ReactNode;
+  role?: Role;
+}
 
-  if (!isAuthenticated) {
+const ProtectedRoute = ({ children, role }: ProtectedRouteProps) => {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) return null;
+
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  return children;
+  if (role && user.role !== role) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <>{children}</>;
 };
 
 export default ProtectedRoute;

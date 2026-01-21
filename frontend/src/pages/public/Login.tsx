@@ -1,25 +1,34 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../hooks/useAuth";
+import { loginApi } from "../../services/auth.service";
+import type { AuthResponse } from "../../types/auth.types";
 
 import "./Login.css";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
 
     try {
-      const user = await login(email, password);
-      navigate(user.role === "USER" ? "/user/progress" : "/trainer/clients");
-    } catch {
+      const res: AuthResponse = await loginApi(email, password);
+
+      // store JWT token
+      localStorage.setItem("token", res.token);
+
+      // redirect based on role
+      if (res.user.role === "USER") {
+        navigate("/user/progress");
+      } else {
+        navigate("/trainer/clients");
+      }
+    } catch (err) {
       setError("Invalid email or password");
     }
   };
