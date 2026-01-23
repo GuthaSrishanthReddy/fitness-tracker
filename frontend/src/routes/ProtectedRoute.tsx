@@ -12,16 +12,22 @@ interface ProtectedRouteProps {
 const ProtectedRoute = ({ children, role }: ProtectedRouteProps) => {
   const { user, isLoading } = useAuth();
 
-  if (isLoading) return null;
+  // ⏳ While checking auth, show NOTHING BUT BLOCK ROUTING
+  if (isLoading) {
+    return <div />; // 👈 NOT null
+  }
 
+  // 🔐 Not logged in
   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
+  // 🚫 Role mismatch
   if (role && user.role !== role) {
     return <Navigate to="/" replace />;
   }
 
+  // ✅ Allowed
   return <>{children}</>;
 };
 
