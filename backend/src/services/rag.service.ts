@@ -5,7 +5,7 @@ import { model } from "./model.service";
 const responseCache = new Map<string, string>();
 
 export const ragService = {
-  async chat(userId: string, message: string) {
+  async chat(userId: string,message: string) {
     const cacheKey = message.trim().toLowerCase();
 
     // ✅ 1. Check cache
