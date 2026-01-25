@@ -1,11 +1,21 @@
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { env } from "../config/env";
 
+const genai = new GoogleGenerativeAI(env.GOOGLE_API_KEY);
 
-export const model = new ChatGoogleGenerativeAI({
+export const model = genai.getGenerativeModel({
     model: "models/gemini-2.5-flash",
-    temperature: 0.7,
-    maxOutputTokens: 300,
-    apiKey: env.GOOGLE_API_KEY,
-    maxRetries: 2,
+    generationConfig: {
+        maxOutputTokens: 500,
+        temperature: 0.3,
+        topP: 0.9,
+    },
 });
+
+export const embeddingModel = genai.getGenerativeModel({
+    model: "text-embedding-004",
+    
+});
+
+
+

@@ -3,7 +3,7 @@ import { model } from "./model.service";
 
 export const insightService = {
   async analyzeProgress(userId: string) {
-    
+
     // Fetch latest progress entries
 
     const progressEntries = await prisma.progress.findMany({
@@ -95,8 +95,8 @@ export const insightService = {
       `;
 
 
-    const result = await model.invoke(prompt);
-    const aiText = result.content as string;
+    const result = await model.generateContent(prompt);
+    const aiText = result.response.text();
 
 
     let insights;
@@ -113,7 +113,7 @@ export const insightService = {
     return {
       status: "success",
       insights,
-      rawData: progressEntries, // useful for charts
+      rawData: progressEntries,
     };
   },
 };

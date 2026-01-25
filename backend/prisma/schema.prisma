@@ -7,6 +7,121 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id              String          @id @default(uuid())
+  name            String
+  email           String          @unique
+  password        String
+  role            Role
+  complianceScore Int             @default(100)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  clientLinks     ClientTrainer[]
+  messages        Message[]
+  plans           Plan?
+  progress        Progress[]
+  trainerProfile  Trainer?
+  conversations   Conversation[]  @relation("ConversationParticipants")
+}
+
+model Trainer {
+  id              String          @id @default(uuid())
+  userId          String          @unique
+  qualifications  String[]
+  expertise       String[]
+  experienceYears Int
+  rating          Float?
+  createdAt       DateTime        @default(now())
+  clients         ClientTrainer[]
+  user            User            @relation(fields: [userId], references: [id])
+}
+
+model ClientTrainer {
+  id        String   @id @default(uuid())
+  trainerId String
+  userId    String
+  createdAt DateTime @default(now())
+  trainer   Trainer  @relation(fields: [trainerId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([trainerId, userId])
+}
+
+model Progress {
+  id                 String   @id @default(uuid())
+  userId             String
+  weight             Float
+  bodyFat            Float
+  muscleMass         Float?
+  waistCircumference Float?
+  systolicBP         Int
+  diastolicBP        Int
+  restingHeartRate   Int
+  fastingSugar       Float?
+  postPrandialSugar  Float?
+  hba1c              Float?
+  creatinine         Float
+  urea               Float?
+  uricAcid           Float?
+  totalCholesterol   Float?
+  ldl                Float?
+  hdl                Float?
+  triglycerides      Float?
+  proteinIntake      Float?
+  creatineIntake     Float?
+  workoutFrequency   Int
+  workoutDuration    Int
+  cardioMinutes      Int
+  sleepHours         Float
+  stressLevel        Int
+  notes              String?
+  createdAt          DateTime @default(now())
+  user               User     @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+}
+
+model Plan {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  goal           Goal
+  calories       Int
+  protein        Int
+  carbs          Int
+  fats           Int
+  workoutPlan    String
+  meditationPlan String?
+  supplementPlan String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  user           User     @relation(fields: [userId], references: [id])
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  senderId       String
+  content        String
+  createdAt      DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  sender         User         @relation(fields: [senderId], references: [id])
+}
+
+model Conversation {
+  id           String    @id @default(uuid())
+  createdAt    DateTime  @default(now())
+  messages     Message[]
+  participants User[]    @relation("ConversationParticipants")
+}
+
+model DocumentEmbedding {
+  id        String                @id @default(uuid())
+  userId    String
+  source    String
+  content   String
+  embedding Unsupported("vector")
+  createdAt DateTime              @default(now())
+}
 
 enum Role {
   USER
@@ -17,143 +132,4 @@ enum Goal {
   FAT_LOSS
   MUSCLE_GAIN
   MAINTENANCE
-}
-
-model User {
-  id              String @id @default(uuid())
-  name            String
-  email           String @unique
-  password        String
-  role            Role
-  complianceScore Int    @default(100)
-
-  trainerProfile Trainer?
-  progress       Progress[]
-  plans          Plan[]
-  messages       Message[]
-
-  clientLinks ClientTrainer[] // ✅ ADD THIS LINE
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  conversations Conversation[] @relation("ConversationParticipants")
-}
-
-model Trainer {
-  id              String   @id @default(uuid())
-  userId          String   @unique
-  qualifications  String[]
-  expertise       String[]
-  experienceYears Int
-  rating          Float?
-
-  user    User            @relation(fields: [userId], references: [id])
-  clients ClientTrainer[]
-
-  createdAt DateTime @default(now())
-}
-
-model ClientTrainer {
-  id        String @id @default(uuid())
-  trainerId String
-  userId    String
-
-  trainer Trainer @relation(fields: [trainerId], references: [id])
-  user    User    @relation(fields: [userId], references: [id])
-
-  createdAt DateTime @default(now())
-
-  @@unique([trainerId, userId])
-}
-
-model Progress {
-  id     String @id @default(uuid())
-  userId String
-
-  // Body
-  weight             Float
-  bodyFat            Float
-  muscleMass         Float?
-  waistCircumference Float?
-
-  // Vitals
-  systolicBP       Int
-  diastolicBP      Int
-  restingHeartRate Int
-
-  // Sugar
-  fastingSugar      Float?
-  postPrandialSugar Float?
-  hba1c             Float?
-
-  // Kidney
-  creatinine Float
-  urea       Float?
-  uricAcid   Float?
-
-  // Lipids
-  totalCholesterol Float?
-  ldl              Float?
-  hdl              Float?
-  triglycerides    Float?
-
-  // Supplements
-  proteinIntake  Float?
-  creatineIntake Float?
-
-  // Lifestyle
-  workoutFrequency Int
-  workoutDuration  Int
-  cardioMinutes    Int
-  sleepHours       Float
-  stressLevel      Int
-
-  notes String?
-
-  user User @relation(fields: [userId], references: [id])
-
-  createdAt DateTime @default(now())
-
-  @@index([userId, createdAt])
-}
-
-model Plan {
-  id       String @id @default(uuid())
-  userId   String
-  goal     Goal
-  calories Int
-
-  protein Int
-  carbs   Int
-  fats    Int
-
-  workoutPlan    String
-  meditationPlan String?
-  supplementPlan String?
-
-  user User @relation(fields: [userId], references: [id])
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([userId])
-}
-
-model Message {
-  id             String @id @default(uuid())
-  conversationId String
-  senderId       String
-  content        String
-
-  conversation Conversation @relation(fields: [conversationId], references: [id])
-  sender       User         @relation(fields: [senderId], references: [id])
-
-  createdAt DateTime @default(now())
-}
-
-model Conversation {
-  id           String @id @default(uuid())
-  participants User[] @relation("ConversationParticipants")
-  messages     Message[]
-
-  createdAt DateTime @default(now())
 }
