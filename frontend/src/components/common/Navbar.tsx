@@ -10,7 +10,7 @@ const Navbar = () => {
 
   const handleLogout = () => {
     logout();
-    navigate("/");
+    navigate("/login", { replace: true });
   };
 
   return (
@@ -29,8 +29,9 @@ const Navbar = () => {
 
         {user?.role === "USER" && (
           <>
-            <Link to="/user/progress">My Progress</Link>
+            <Link to="/user/dashboard">Dashboard</Link>
             <Link to="/user/plan">My Plan</Link>
+            <Link to="/user/progress">My Progress</Link>
             <Link to="/user/my-trainer">My Trainer</Link>
             <Link to="/user/explore-trainers">Explore Trainers</Link>
             <Link to="/user/profile">Profile</Link>
