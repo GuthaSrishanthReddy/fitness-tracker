@@ -1,12 +1,18 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { loginApi } from "../../services/auth.service";
+import { useAuth } from "../../hooks/useAuth";
+
 import type { AuthResponse } from "../../types/auth.types";
 
 import "./Login.css";
 
+
+
+
 const Login = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,14 +26,17 @@ const Login = () => {
       const res: AuthResponse = await loginApi(email, password);
 
       // store JWT token
-      localStorage.setItem("token", res.token);
+      login(res.token);
 
       // redirect based on role
+      // redirect based on role
+    
       if (res.user.role === "USER") {
-        navigate("/user/progress");
+        navigate("/user/dashboard", { replace: true });
       } else {
-        navigate("/trainer/clients");
+        navigate("/trainer/clients", { replace: true });
       }
+      
     } catch (err) {
       setError("Invalid email or password");
     }

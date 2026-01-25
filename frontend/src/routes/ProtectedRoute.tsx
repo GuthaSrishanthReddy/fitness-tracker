@@ -24,7 +24,7 @@ const ProtectedRoute = ({ children, role }: ProtectedRouteProps) => {
 
   // 🚫 Role mismatch
   if (role && user.role !== role) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/unauthorized" replace />;
   }
 
   // ✅ Allowed
