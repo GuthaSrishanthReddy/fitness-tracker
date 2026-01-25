@@ -4,8 +4,8 @@ import { retrieveContext } from "./rag.retrieve";
 const responseCache = new Map<string, string>();
 
 export const ragService = {
-  async chat(userId: string, message: string) {
-    const cacheKey = `${userId}:${message.trim().toLowerCase()}:${Math.floor(Date.now() / 300000)}`;
+  async chat(userId: string,message: string) {
+    const cacheKey = message.trim().toLowerCase();
 
     // 1️⃣ Cache check
     if (responseCache.has(cacheKey)) {
