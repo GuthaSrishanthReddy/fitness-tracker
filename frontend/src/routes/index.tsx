@@ -15,6 +15,7 @@ import MyPlan from "../pages/user/MyPlan";
 import MyTrainer from "../pages/user/MyTrainer";
 import ExploreTrainers from "../pages/user/ExploreTrainers";
 import Profile from "../pages/user/Profile";
+import UserDataForm from "../pages/user/UserDataForm";
 
 /* Trainer */
 import MyClients from "../pages/trainer/MyClients";
@@ -42,6 +43,7 @@ const AppRoutes = () => {
   <Route path="my-trainer" element={<MyTrainer />} />
   <Route path="explore-trainers" element={<ExploreTrainers />} />
   <Route path="profile" element={<Profile />} />
+  <Route path="user-data" element={<UserDataForm />} />
   </Route>
 
       

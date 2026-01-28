@@ -22,6 +22,9 @@ model User {
   progress        Progress[]
   trainerProfile  Trainer?
   conversations   Conversation[]  @relation("ConversationParticipants")
+  fitnessGoal   FitnessGoal
+  fitnessLevel  FitnessLevel
+  activityType  ActivityType
 }
 
 model Trainer {
@@ -84,7 +87,9 @@ model Progress {
 model Plan {
   id             String   @id @default(uuid())
   userId         String   @unique
-  goal           Goal
+  goal           FitnessGoal
+  activity       ActivityType
+  level          FitnessLevel
   calories       Int
   protein        Int
   carbs          Int
@@ -128,8 +133,56 @@ enum Role {
   TRAINER
 }
 
-enum Goal {
+enum FitnessGoal {
   FAT_LOSS
+  WEIGHT_GAIN
   MUSCLE_GAIN
   MAINTENANCE
+  STRENGTH_INCREASE
+  ENDURANCE_INCREASE
+  FLEXIBILITY
+  MOBILITY
+  BALANCE
+  ATHLETIC_PERFORMANCE
+  PHYSICAL_REHABILITATION
+}
+
+enum ActivityType {
+  WEIGHT_TRAINING
+  BODYWEIGHT
+  YOGA
+  PILATES
+  RUNNING
+  WALKING
+  HIKING
+  CYCLING
+  SWIMMING
+  CROSSFIT
+  HIIT
+  DANCE
+  MARTIAL_ARTS
+  SPORTS
+  HOME_WORKOUTS
+  OUTDOOR_TRAINING
+  MIXED_TRAINING
+}
+
+enum FitnessLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  ATHLETE
+}
+
+
+model GoalActivityRule {
+  id        String        @id @default(uuid())
+
+  goal      FitnessGoal
+  activity  ActivityType
+  minLevel  FitnessLevel
+
+  @@unique([goal, activity])
+  @@index([goal])
+  @@index([goal, minLevel])
 }

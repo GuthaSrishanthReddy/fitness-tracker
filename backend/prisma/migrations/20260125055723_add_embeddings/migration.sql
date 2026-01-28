@@ -1,4 +1,6 @@
 -- CreateTable
+CREATE EXTENSION IF NOT EXISTS vector;
+
 CREATE TABLE "DocumentEmbedding" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
