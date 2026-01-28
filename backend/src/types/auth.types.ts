@@ -1,30 +1,25 @@
+import { Role } from "@prisma/client";
 import { Request } from "express";
 
 /**
- * What auth middleware guarantees at runtime
+ * This is the ONLY user shape that exists in auth.
+ * Used in JWT payload, req.user, and controllers.
  */
-export type Role = "USER" | "TRAINER";
-
-export interface JwtUser {
+export interface AuthUser {
   id: string;
+  email: string;
   role: Role;
 }
 
 /**
- * Request AFTER auth middleware
+ * Alias JwtUser to AuthUser
+ * (JWT payload must contain all fields)
+ */
+export type JwtUser = AuthUser;
+
+/**
+ * Express request extended with authenticated user
  */
 export interface AuthRequest extends Request {
-  user?: JwtUser;
-}
-
-export interface RegisterInput {
-  name: string;
-  email: string;
-  password: string;
-  role: Role;
-}
-
-export interface LoginInput {
-  email: string;
-  password: string;
+  user?: AuthUser;
 }

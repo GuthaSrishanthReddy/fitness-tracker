@@ -6,7 +6,7 @@ export const getMe = async (
   req: AuthRequest,
   res: Response,
   next: NextFunction
-) => {
+)=> {
   try {
     if (!req.user) {
       return res.status(401).json({ message: "Unauthorized" });
@@ -23,7 +23,7 @@ export const updateMe = async (
   req: AuthRequest,
   res: Response,
   next: NextFunction
-) => {
+)=> {
   try {
     if (!req.user) {
       return res.status(401).json({ message: "Unauthorized" });

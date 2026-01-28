@@ -3,29 +3,34 @@ import jwt from "jsonwebtoken";
 import { AuthRequest, JwtUser } from "../types/auth.types";
 
 export const authMiddleware = (
-  req: AuthRequest,   // ✅ THIS IS THE FIX
+  req: AuthRequest,
   res: Response,
   next: NextFunction
-) => {
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader?.startsWith("Bearer ")) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-
-  const token = authHeader.split(" ")[1];
-
+): void => {
   try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      res.status(401).json({ message: "Unauthorized" });
+      return;
+    }
+
+    const token = authHeader.split(" ")[1];
+
     const decoded = jwt.verify(
       token,
-      process.env.JWT_SECRET!
+      process.env.JWT_SECRET as string
     ) as JwtUser;
 
-    // ✅ Now TypeScript KNOWS req has `user`
-    req.user = decoded;
+    // decoded now HAS id, email, role
+    req.user = {
+      id: decoded.id,
+      email: decoded.email,
+      role: decoded.role
+    };
 
     next();
-  } catch {
-    return res.status(401).json({ message: "Invalid token" });
+  } catch (error) {
+    res.status(401).json({ message: "Invalid token" });
   }
 };

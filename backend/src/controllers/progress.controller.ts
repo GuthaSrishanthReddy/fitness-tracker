@@ -24,7 +24,7 @@ export const createOrUpdateProgress = async (
   req: AuthRequest,
   res: Response,
   next: NextFunction
-) => {
+)=> {
   try {
     if (!req.user) {
       return res.status(401).json({ message: "Unauthorized" });

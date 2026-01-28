@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 
 import { prisma } from "../config/db";
 import { env } from "../config/env";
+import { FitnessGoal, FitnessLevel, ActivityType } from "@prisma/client";
 
 export const authService = {
   async register(data: any) {
@@ -21,11 +22,16 @@ export const authService = {
     const user = await prisma.user.create({
       data: {
         email,
-        password: hashedPassword,
+        password,
         role,
-        name
+        name,
+
+        fitnessGoal: FitnessGoal.MAINTENANCE,
+        fitnessLevel: FitnessLevel.BEGINNER,
+        activityType: ActivityType.WALKING
       }
     });
+
 
     const token = jwt.sign(
       { id: user.id, role: user.role },

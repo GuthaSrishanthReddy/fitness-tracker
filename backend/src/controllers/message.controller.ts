@@ -6,7 +6,7 @@ export const getMessages = async (
   req: AuthRequest,
   res: Response,
   next: NextFunction
-) => {
+)=> {
   try {
     if (!req.user) {
       return res.status(401).json({ message: "Unauthorized" });
@@ -30,7 +30,7 @@ export const sendMessage = async (
   req: AuthRequest,
   res: Response,
   next: NextFunction
-) => {
+)=> {
   try {
     if (!req.user) {
       return res.status(401).json({ message: "Unauthorized" });

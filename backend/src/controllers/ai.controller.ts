@@ -7,7 +7,7 @@ export const chatWithAI = async (
   req: AuthRequest,
   res: Response,
   next: NextFunction
-) => {
+)=> {
   try {
     if (!req.user) {
       return res.status(401).json({ message: "Unauthorized" });
@@ -25,7 +25,7 @@ export const analyzeProgress = async (
   req: AuthRequest,
   res: Response,
   next: NextFunction
-) => {
+)=> {
   try {
     if (!req.user) {
       return res.status(401).json({ message: "Unauthorized" });
