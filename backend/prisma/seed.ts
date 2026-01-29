@@ -8,7 +8,10 @@ async function main() {
       name: "Demo Trainer",
       email: "trainer@test.com",
       password: "hashedpassword",
-      role: "TRAINER"
+      role: "TRAINER",
+      fitnessGoal: "MAINTENANCE",
+      fitnessLevel: "BEGINNER",
+      activityType: "WALKING"
     }
   });
 
@@ -21,7 +24,7 @@ async function main() {
     }
   });
 
-  console.log("✅ Seed data created");
+  console.log("Seed data created");
 }
 
 main()
