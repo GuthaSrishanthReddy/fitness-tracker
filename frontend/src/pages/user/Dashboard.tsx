@@ -25,7 +25,7 @@ const Dashboard = () => {
         {/* My Plan */}
         <div
           className="dashboard-card"
-          onClick={() => navigate("/user/my-plan")}
+          onClick={() => navigate("/user/plan")}
         >
           <PlanCard />
         </div>
@@ -33,7 +33,7 @@ const Dashboard = () => {
         {/* My Progress */}
         <div
           className="dashboard-card"
-          onClick={() => navigate("/user/my-progress")}
+          onClick={() => navigate("/user/progress")}
         >
           <ClientCard name="Your Progress" />
         </div>

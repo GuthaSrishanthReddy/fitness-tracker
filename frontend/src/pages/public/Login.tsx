@@ -34,7 +34,7 @@ const Login = () => {
       if (res.user.role === "USER") {
         navigate("/user/dashboard", { replace: true });
       } else {
-        navigate("/trainer/clients", { replace: true });
+        navigate("/trainer/dashboard", { replace: true });
       }
       
     } catch (err) {

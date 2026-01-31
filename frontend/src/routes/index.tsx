@@ -1,7 +1,9 @@
 import { Routes, Route } from "react-router-dom";
 import ProtectedRoute from "./ProtectedRoute";
+import TrainerDashboard from "../pages/trainer/TrainerDashboard";
 import Dashboard from "../pages/user/Dashboard";
 import UserLayout from "../layouts/UserLayout";
+import TrainerLayout from "../layouts/TrainerLayout";
 
 /* Public */
 import Home from "../pages/public/Home";
@@ -19,6 +21,10 @@ import UserDataForm from "../pages/user/UserDataForm";
 
 /* Trainer */
 import MyClients from "../pages/trainer/MyClients";
+import ExploreClients from "../pages/trainer/ExploreClients";
+import ClientDetails from "../pages/trainer/ClientDetails";
+import MyHistory from "../pages/trainer/MyHistory";
+import TrainerProfile from "../pages/trainer/Profile"
 
 const AppRoutes = () => {
   return (
@@ -49,13 +55,22 @@ const AppRoutes = () => {
       
       {/* 🧑‍🏫 TRAINER (protected) */}
       <Route
-        path="/trainer/clients"
-        element={
-          <ProtectedRoute role="TRAINER">
-            <MyClients />
-          </ProtectedRoute>
-        }
-      />
+  path="/trainer"
+  element={
+    <ProtectedRoute role="TRAINER">
+      <TrainerLayout />
+    </ProtectedRoute>
+  }
+>
+  <Route path="dashboard" element={<TrainerDashboard />} />
+  <Route path="clients" element={<MyClients />} />
+  <Route path="explore-clients" element={<ExploreClients />}/>
+  <Route path="client-details" element={<ClientDetails/>}/>
+  <Route path="history" element={<MyHistory/>}/>
+  <Route path="profile" element={<TrainerProfile/>}/>
+  {/* other trainer routes */}
+</Route>
+
 
       {/* ❌ 404 — NOT redirect */}
       <Route path="*" element={<div>Page not found</div>} />

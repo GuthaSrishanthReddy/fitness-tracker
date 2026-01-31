@@ -40,6 +40,7 @@ const Navbar = () => {
 
         {user?.role === "TRAINER" && (
           <>
+            <Link to="/trainer/dashboard">Dashboard</Link>
             <Link to="/trainer/clients">My Clients</Link>
             <Link to="/trainer/history">My History</Link>
             <Link to="/trainer/explore-clients">Explore Clients</Link>
