@@ -5,7 +5,7 @@ const responseCache = new Map<string, string>();
 
 export const ragService = {
   async chat(userId: string,message: string) {
-    const cacheKey = message.trim().toLowerCase();
+    const cacheKey = `${userId}:${message.trim().toLowerCase()}`;
 
     // 1️⃣ Cache check
     if (responseCache.has(cacheKey)) {

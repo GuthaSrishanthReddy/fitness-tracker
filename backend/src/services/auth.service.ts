@@ -14,7 +14,11 @@ export const authService = {
     });
 
     if (existing) {
-      throw new Error("User already exists");
+      const err = new Error("User already exists") as Error & {
+        statusCode?: number;
+      };
+      err.statusCode = 409;
+      throw err;
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -33,13 +37,25 @@ export const authService = {
     });
 
 
+    if (role === "TRAINER") {
+      await prisma.trainer.create({
+        data: {
+          userId: user.id,
+          qualifications: [],
+          expertise: [],
+          experienceYears: 0
+        }
+      });
+    }
+
     const token = jwt.sign(
       { id: user.id, role: user.role },
       env.JWT_SECRET,
       { expiresIn: "7d" }
     );
 
-    return { token, user };
+    const { password: _password, ...safeUser } = user;
+    return { token, user: safeUser };
   },
 
   async login(data: any) {
@@ -50,12 +66,20 @@ export const authService = {
     });
 
     if (!user) {
-      throw new Error("Invalid credentials");
+      const err = new Error("Invalid credentials") as Error & {
+        statusCode?: number;
+      };
+      err.statusCode = 401;
+      throw err;
     }
 
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) {
-      throw new Error("Invalid credentials");
+      const err = new Error("Invalid credentials") as Error & {
+        statusCode?: number;
+      };
+      err.statusCode = 401;
+      throw err;
     }
 
     const token = jwt.sign(
@@ -64,6 +88,8 @@ export const authService = {
       { expiresIn: "7d" }
     );
 
-    return { token, user };
+    const { password: _password, ...safeUser } = user;
+    return { token, user: safeUser };
   }
 };
+

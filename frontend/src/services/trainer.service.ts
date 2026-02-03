@@ -1,5 +1,8 @@
 import { api } from "./api";
-import type { TrainerProfile } from "../types/trainer.types";
+import type { TrainerListItem, TrainerProfile } from "../types/trainer.types";
 
 export const fetchTrainerProfile = () =>
-  api<TrainerProfile>("/trainer/profile");
+  api<TrainerProfile>("/trainers/me");
+
+export const fetchTrainers = () =>
+  api<TrainerListItem[]>("/trainers");

@@ -3,3 +3,12 @@ export interface TrainerProfile {
   name: string;
   expertise: string[];
 }
+
+export interface TrainerListItem {
+  id: string;
+  expertise: string[];
+  user: {
+    name: string;
+    email: string;
+  };
+}
