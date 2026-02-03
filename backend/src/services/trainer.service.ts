@@ -17,6 +17,24 @@ export const trainerService = {
     });
   },
 
+  async updateTrainerProfile(trainerId: string, expertise: string[]) {
+    try {
+      return await prisma.trainer.update({
+        where: { userId: trainerId },
+        data: { expertise }
+      });
+    } catch (error: any) {
+      if (error?.code === "P2025") {
+        const err = new Error("Trainer profile not found") as Error & {
+          statusCode?: number;
+        };
+        err.statusCode = 404;
+        throw err;
+      }
+      throw error;
+    }
+  },
+
   async getMyClients(trainerId: string) {
     return prisma.clientTrainer.findMany({
       where: { trainerId },

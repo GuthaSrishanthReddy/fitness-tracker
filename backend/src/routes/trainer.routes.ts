@@ -3,7 +3,8 @@ import { Router } from "express";
 import {
   getTrainerProfile,
   exploreTrainers,
-  getMyClients
+  getMyClients,
+  updateTrainerProfile
 } from "../controllers/trainer.controller";
 
 import { authMiddleware } from "../middleware/auth.middleware";
@@ -25,6 +26,13 @@ router.get(
   authMiddleware,
   roleMiddleware("TRAINER"),
   getMyClients
+);
+
+router.put(
+  "/me",
+  authMiddleware,
+  roleMiddleware("TRAINER"),
+  updateTrainerProfile
 );
 
 export default router;
