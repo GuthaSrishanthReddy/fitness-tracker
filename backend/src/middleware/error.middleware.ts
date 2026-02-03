@@ -8,10 +8,15 @@ export const errorHandler = (
 ) => {
   console.error(err);
 
-  const status = err.statusCode || 500;
+  const status =
+    err.statusCode ||
+    (err?.code === "P1001" ? 503 : 500);
 
   res.status(status).json({
     success: false,
-    message: err.message || "Internal server error"
+    message:
+      err?.code === "P1001"
+        ? "Database unreachable"
+        : err.message || "Internal server error"
   });
 };

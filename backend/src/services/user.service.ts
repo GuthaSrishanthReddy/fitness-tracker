@@ -14,9 +14,11 @@ export const userService = {
   },
 
   async updateMe(userId: string, data: any) {
-    return prisma.user.update({
+    const user = await prisma.user.update({
       where: { id: userId },
       data
     });
+    const { password: _password, ...safeUser } = user;
+    return safeUser;
   }
 };

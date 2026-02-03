@@ -1,11 +1,11 @@
 import { api } from "./api";
 import type { ChatMessage } from "../types/chat.types";
 
-export const fetchMessages = () =>
-  api<ChatMessage[]>("/chat");
+export const fetchMessages = (conversationId: string) =>
+  api<ChatMessage[]>(`/messages/${conversationId}`);
 
-export const sendMessage = (text: string) =>
-  api<void>("/chat", {
+export const sendMessage = (conversationId: string, content: string) =>
+  api<void>(`/messages/${conversationId}`, {
     method: "POST",
-    body: JSON.stringify({ text }),
+    body: JSON.stringify({ content }),
   });
