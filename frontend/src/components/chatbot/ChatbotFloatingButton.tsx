@@ -1,13 +1,25 @@
-import { useState } from "react";
-import ChatWindow from "./ChatWindow";
 import "./ChatbotFloatingButton.css";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export default function ChatbotFloatingButton() {
-  const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isChatPage = location.pathname.toLowerCase() === "/chatbot";
+
+  if (isChatPage) {
+    return null;
+  }
+
   return (
     <>
-      <button className="chatbot-btn" onClick={() => setOpen(o => !o)}>AI</button>
-      {open && <ChatWindow />}
+      <button
+        type="button"
+        className="chatbot-btn"
+        aria-label="Open AI chat"
+        onClick={() => navigate("/chatBot")}
+      >
+        <span className="chatbot-btn__inner">AI</span>
+      </button>
     </>
   );
 }

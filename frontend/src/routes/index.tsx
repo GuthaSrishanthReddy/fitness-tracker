@@ -25,6 +25,7 @@ import ExploreClients from "../pages/trainer/ExploreClients";
 import ClientDetails from "../pages/trainer/ClientDetails";
 import MyHistory from "../pages/trainer/MyHistory";
 import TrainerProfile from "../pages/trainer/Profile"
+import ChatBotWindow from "../components/chatbot/ChatWindow";
 
 const AppRoutes = () => {
   return (
@@ -33,6 +34,7 @@ const AppRoutes = () => {
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/chatBot" element={<ChatBotWindow />} />
 
       {/* 👤 USER (protected + layout) */}
 <Route
