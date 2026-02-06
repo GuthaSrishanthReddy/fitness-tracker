@@ -34,3 +34,9 @@
   transform: translateY(-1px);
   box-shadow: 0 8px 16px rgba(167, 196, 212, 0.28);
 }
+
+.chat-input__button:disabled,
+.chat-input__field:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}

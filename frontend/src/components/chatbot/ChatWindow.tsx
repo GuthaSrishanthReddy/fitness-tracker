@@ -1,7 +1,8 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ChatInput from "./ChatInput";
 import ChatMessage from "./ChatMessage";
+import { askChatbot } from "../../services/chatbot.service";
 import "./ChatWindow.css";
 
 type ChatWindowProps = {
@@ -10,6 +11,18 @@ type ChatWindowProps = {
 
 export default function ChatWindow({ onClose }: ChatWindowProps) {
   const navigate = useNavigate();
+  const [input, setInput] = useState("");
+  const [isSending, setIsSending] = useState(false);
+  const [messages, setMessages] = useState<
+    { id: string; sender: "user" | "ai"; text: string }[]
+  >([
+    {
+      id: "welcome",
+      sender: "ai",
+      text: "Hi! Ask me anything about training or nutrition.",
+    },
+  ]);
+  const endRef = useRef<HTMLDivElement | null>(null);
 
   const handleClose = useCallback(() => {
     if (onClose) {
@@ -18,6 +31,44 @@ export default function ChatWindow({ onClose }: ChatWindowProps) {
       navigate(-1);
     }
   }, [navigate, onClose]);
+
+  const handleSend = useCallback(async () => {
+    const trimmed = input.trim();
+    if (!trimmed || isSending) return;
+
+    const userMessage = {
+      id: `user-${Date.now()}`,
+      sender: "user" as const,
+      text: trimmed,
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
+    setIsSending(true);
+
+    try {
+      const reply = await askChatbot(trimmed);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `ai-${Date.now()}`,
+          sender: "ai",
+          text: reply,
+        },
+      ]);
+    } catch (error: any) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `error-${Date.now()}`,
+          sender: "ai",
+          text: error?.message || "Sorry, something went wrong.",
+        },
+      ]);
+    } finally {
+      setIsSending(false);
+    }
+  }, [input, isSending]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -28,6 +79,10 @@ export default function ChatWindow({ onClose }: ChatWindowProps) {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleClose]);
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages.length]);
 
   return (
     <div className="chat-window">
@@ -50,16 +105,23 @@ export default function ChatWindow({ onClose }: ChatWindowProps) {
       </header>
 
       <div className="chat-window__messages">
-        <ChatMessage text="Hi! Ask me anything about training or nutrition." />
-        <ChatMessage
-          variant="user"
-          text="Can you suggest a quick post‑workout meal?"
-        />
-        <ChatMessage text="Sure. Try Greek yogurt with berries and a handful of nuts for protein and carbs." />
+        {messages.map((message) => (
+          <ChatMessage
+            key={message.id}
+            text={message.text}
+            variant={message.sender === "user" ? "user" : "bot"}
+          />
+        ))}
+        <div ref={endRef} />
       </div>
 
       <div className="chat-window__composer">
-        <ChatInput />
+        <ChatInput
+          value={input}
+          onChange={setInput}
+          onSend={handleSend}
+          disabled={isSending}
+        />
       </div>
     </div>
   );
