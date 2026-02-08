@@ -1,6 +1,6 @@
-import "./Profile.css";
+import "./TrainerProfile.css";
 
-const Profile = () => {
+const TrainerProfile = () => {
   return (
     <div className="trainer-profile">
       <h2>Trainer Profile</h2>
@@ -10,4 +10,4 @@ const Profile = () => {
   );
 };
 
-export default Profile;
+export default TrainerProfile;

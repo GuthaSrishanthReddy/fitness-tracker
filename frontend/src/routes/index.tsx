@@ -24,7 +24,7 @@ import MyClients from "../pages/trainer/MyClients";
 import ExploreClients from "../pages/trainer/ExploreClients";
 import ClientDetails from "../pages/trainer/ClientDetails";
 import MyHistory from "../pages/trainer/MyHistory";
-import TrainerProfile from "../pages/trainer/Profile"
+import TrainerProfile from "../pages/trainer/TrainerProfile"
 
 const AppRoutes = () => {
   return (
@@ -67,7 +67,7 @@ const AppRoutes = () => {
   <Route path="explore-clients" element={<ExploreClients />}/>
   <Route path="client-details" element={<ClientDetails/>}/>
   <Route path="history" element={<MyHistory/>}/>
-  <Route path="profile" element={<TrainerProfile/>}/>
+  <Route path="trainer-profile" element={<TrainerProfile/>}/>
   {/* other trainer routes */}
 </Route>
 
