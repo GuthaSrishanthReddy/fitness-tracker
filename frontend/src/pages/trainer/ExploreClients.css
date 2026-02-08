@@ -3,3 +3,31 @@
   flex-direction: column;
   gap: 1.5rem;
 }
+
+.explore-clients {
+  padding: 1rem;
+}
+
+.explore-clients__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.client-card {
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 1.2rem;
+  background: #fff;
+}
+
+.primary-btn {
+  margin-top: 1rem;
+  width: 100%;
+  padding: 0.6rem;
+  border-radius: 8px;
+  border: none;
+  background: #ccc;
+  cursor: not-allowed;
+}

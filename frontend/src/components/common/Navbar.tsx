@@ -30,10 +30,6 @@ const Navbar = () => {
         {user?.role === "USER" && (
           <>
             <Link to="/user/dashboard">Dashboard</Link>
-            <Link to="/user/plan">My Plan</Link>
-            <Link to="/user/progress">My Progress</Link>
-            <Link to="/user/my-trainer">My Trainer</Link>
-            <Link to="/user/explore-trainers">Explore Trainers</Link>
             <Link to="/user/profile">Profile</Link>
           </>
         )}
@@ -42,11 +38,12 @@ const Navbar = () => {
           <>
             <Link to="/trainer/dashboard">Dashboard</Link>
             <Link to="/trainer/clients">My Clients</Link>
-            <Link to="/trainer/history">My History</Link>
             <Link to="/trainer/explore-clients">Explore Clients</Link>
-            <Link to="/trainer/profile">Profile</Link>
+            <Link to="/trainer/history">My History</Link>
+            <Link to="/trainer/trainer-profile">Profile</Link>
           </>
         )}
+
       </div>
 
       <div className="navbar__actions">

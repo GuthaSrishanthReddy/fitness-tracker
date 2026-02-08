@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { updateTrainerProfile } from "../../services/trainer.service";
-import "./Profile.css";
+import "./TrainerProfile.css";
 
-const Profile = () => {
+const TrainerProfile = () => {
   const [expertise, setExpertise] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -25,7 +25,6 @@ const Profile = () => {
       setIsSaving(false);
     }
   };
-
   return (
     <div className="trainer-profile">
       <h2>Trainer Profile</h2>
@@ -57,4 +56,4 @@ const Profile = () => {
   );
 };
 
-export default Profile;
+export default TrainerProfile;

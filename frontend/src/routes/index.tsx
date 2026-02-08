@@ -23,36 +23,35 @@ import MyClients from "../pages/trainer/MyClients";
 import ExploreClients from "../pages/trainer/ExploreClients";
 import ClientDetails from "../pages/trainer/ClientDetails";
 import MyHistory from "../pages/trainer/MyHistory";
-import TrainerProfile from "../pages/trainer/Profile";
-import ChatBotWindow from "../components/chatbot/ChatWindow";
+import TrainerProfile from "../pages/trainer/TrainerProfile";
 
 const AppRoutes = () => {
   return (
     <Routes>
-      {/* Public */}
+      {/* 🌍 Public */}
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
 
-      {/* User (protected + layout) */}
+      {/* 👤 USER */}
       <Route
+        path="/user"
         element={
           <ProtectedRoute role="USER">
             <UserLayout />
           </ProtectedRoute>
         }
       >
-        <Route path="/user/dashboard" element={<Dashboard />} />
-        <Route path="/user/plan" element={<MyPlan />} />
-        <Route path="/user/progress" element={<MyProgress />} />
-        <Route path="/user/my-trainer" element={<MyTrainer />} />
-        <Route path="/user/explore-trainers" element={<ExploreTrainers />} />
-        <Route path="/user/profile" element={<Profile />} />
-        <Route path="/user/user-data" element={<UserDataForm />} />
-        <Route path="/chatBot" element={<ChatBotWindow />} />
+        <Route path="dashboard" element={<Dashboard />} />
+        <Route path="plan" element={<MyPlan />} />
+        <Route path="progress" element={<MyProgress />} />
+        <Route path="my-trainer" element={<MyTrainer />} />
+        <Route path="explore-trainers" element={<ExploreTrainers />} />
+        <Route path="profile" element={<Profile />} />
+        <Route path="user-data" element={<UserDataForm />} />
       </Route>
 
-      {/* Trainer (protected) */}
+      {/* 🧑‍🏫 TRAINER */}
       <Route
         path="/trainer"
         element={
@@ -67,10 +66,9 @@ const AppRoutes = () => {
         <Route path="client-details" element={<ClientDetails />} />
         <Route path="history" element={<MyHistory />} />
         <Route path="profile" element={<TrainerProfile />} />
-        {/* other trainer routes */}
       </Route>
 
-      {/* 404 - NOT redirect */}
+      {/* ❌ 404 */}
       <Route path="*" element={<div>Page not found</div>} />
     </Routes>
   );
