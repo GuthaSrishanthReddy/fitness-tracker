@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ChatInput from "./ChatInput";
 import ChatMessage from "./ChatMessage";
-import { askChatbot } from "../../services/chatbot.service";
+import { askChatbot, endChatSession } from "../../services/chatbot.service";
 import "./ChatWindow.css";
 
 type ChatWindowProps = {
@@ -11,6 +11,8 @@ type ChatWindowProps = {
 
 export default function ChatWindow({ onClose }: ChatWindowProps) {
   const navigate = useNavigate();
+  const sessionIdRef = useRef<string>(crypto.randomUUID());
+  const endedRef = useRef(false);
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [messages, setMessages] = useState<
@@ -24,13 +26,24 @@ export default function ChatWindow({ onClose }: ChatWindowProps) {
   ]);
   const endRef = useRef<HTMLDivElement | null>(null);
 
+  const endSession = useCallback(async () => {
+    if (endedRef.current) return;
+    endedRef.current = true;
+    try {
+      await endChatSession(sessionIdRef.current);
+    } catch {
+      // ignore end-session errors
+    }
+  }, []);
+
   const handleClose = useCallback(() => {
+    void endSession();
     if (onClose) {
       onClose();
     } else {
       navigate(-1);
     }
-  }, [navigate, onClose]);
+  }, [navigate, onClose, endSession]);
 
   const handleSend = useCallback(async () => {
     const trimmed = input.trim();
@@ -47,7 +60,7 @@ export default function ChatWindow({ onClose }: ChatWindowProps) {
     setIsSending(true);
 
     try {
-      const reply = await askChatbot(trimmed);
+      const reply = await askChatbot(sessionIdRef.current, trimmed);
       setMessages((prev) => [
         ...prev,
         {
@@ -77,8 +90,11 @@ export default function ChatWindow({ onClose }: ChatWindowProps) {
       }
     };
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleClose]);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      void endSession();
+    };
+  }, [handleClose, endSession]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -92,7 +108,6 @@ export default function ChatWindow({ onClose }: ChatWindowProps) {
           <p className="chat-window__subtitle">Fitness guidance on demand</p>
         </div>
         <div className="chat-window__header-actions">
-          <span className="chat-window__status">Online</span>
           <button
             type="button"
             className="chat-window__close"

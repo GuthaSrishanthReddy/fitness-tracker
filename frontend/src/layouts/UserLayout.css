@@ -6,3 +6,8 @@
 .user-layout__content {
   padding: 1.5rem;
 }
+
+.user-layout__content--chat {
+  padding: 0;
+  min-height: calc(100vh - 64px);
+}

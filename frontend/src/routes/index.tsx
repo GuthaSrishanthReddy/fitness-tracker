@@ -10,7 +10,6 @@ import Home from "../pages/public/Home";
 import Login from "../pages/public/Login";
 import Signup from "../pages/public/Signup";
 
-
 /* User */
 import MyProgress from "../pages/user/MyProgress";
 import MyPlan from "../pages/user/MyPlan";
@@ -24,57 +23,54 @@ import MyClients from "../pages/trainer/MyClients";
 import ExploreClients from "../pages/trainer/ExploreClients";
 import ClientDetails from "../pages/trainer/ClientDetails";
 import MyHistory from "../pages/trainer/MyHistory";
-import TrainerProfile from "../pages/trainer/Profile"
+import TrainerProfile from "../pages/trainer/Profile";
 import ChatBotWindow from "../components/chatbot/ChatWindow";
 
 const AppRoutes = () => {
   return (
     <Routes>
-      {/* 🌍 Public */}
+      {/* Public */}
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
-      <Route path="/chatBot" element={<ChatBotWindow />} />
 
-      {/* 👤 USER (protected + layout) */}
-<Route
-  path="/user"
-  element={
-    <ProtectedRoute role="USER">
-      <UserLayout />
-    </ProtectedRoute>
-  }
->
-  <Route path="dashboard" element={<Dashboard />} />
-  <Route path="plan" element={<MyPlan />} />
-  <Route path="progress" element={<MyProgress />} />
-  <Route path="my-trainer" element={<MyTrainer />} />
-  <Route path="explore-trainers" element={<ExploreTrainers />} />
-  <Route path="profile" element={<Profile />} />
-  <Route path="user-data" element={<UserDataForm />} />
-  </Route>
-
-      
-      {/* 🧑‍🏫 TRAINER (protected) */}
+      {/* User (protected + layout) */}
       <Route
-  path="/trainer"
-  element={
-    <ProtectedRoute role="TRAINER">
-      <TrainerLayout />
-    </ProtectedRoute>
-  }
->
-  <Route path="dashboard" element={<TrainerDashboard />} />
-  <Route path="clients" element={<MyClients />} />
-  <Route path="explore-clients" element={<ExploreClients />}/>
-  <Route path="client-details" element={<ClientDetails/>}/>
-  <Route path="history" element={<MyHistory/>}/>
-  <Route path="profile" element={<TrainerProfile/>}/>
-  {/* other trainer routes */}
-</Route>
+        element={
+          <ProtectedRoute role="USER">
+            <UserLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="/user/dashboard" element={<Dashboard />} />
+        <Route path="/user/plan" element={<MyPlan />} />
+        <Route path="/user/progress" element={<MyProgress />} />
+        <Route path="/user/my-trainer" element={<MyTrainer />} />
+        <Route path="/user/explore-trainers" element={<ExploreTrainers />} />
+        <Route path="/user/profile" element={<Profile />} />
+        <Route path="/user/user-data" element={<UserDataForm />} />
+        <Route path="/chatBot" element={<ChatBotWindow />} />
+      </Route>
 
+      {/* Trainer (protected) */}
+      <Route
+        path="/trainer"
+        element={
+          <ProtectedRoute role="TRAINER">
+            <TrainerLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="dashboard" element={<TrainerDashboard />} />
+        <Route path="clients" element={<MyClients />} />
+        <Route path="explore-clients" element={<ExploreClients />} />
+        <Route path="client-details" element={<ClientDetails />} />
+        <Route path="history" element={<MyHistory />} />
+        <Route path="profile" element={<TrainerProfile />} />
+        {/* other trainer routes */}
+      </Route>
 
-      {/* ❌ 404 — NOT redirect */}
+      {/* 404 - NOT redirect */}
       <Route path="*" element={<div>Page not found</div>} />
     </Routes>
   );

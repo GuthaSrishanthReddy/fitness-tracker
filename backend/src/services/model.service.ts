@@ -13,8 +13,7 @@ export const model = genai.getGenerativeModel({
 });
 
 export const embeddingModel = genai.getGenerativeModel({
-    model: "text-embedding-004",
-    
+    model: "models/gemini-embedding-001",
 });
 
 

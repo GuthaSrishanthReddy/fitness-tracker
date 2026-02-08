@@ -29,7 +29,8 @@ body.dark {
 .chat-window {
   position: relative;
   width: 100%;
-  min-height: 100vh;
+  min-height: calc(100vh - 64px);
+  height: calc(100vh - 64px);
   background: var(--chat-bg);
   border-radius: 0;
   border: none;

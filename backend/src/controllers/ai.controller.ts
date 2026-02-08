@@ -51,8 +51,30 @@ export const chatWithChatbot = async (
     }
 
     const userId = req.user.id;
-    const response = await chatbotService.chat(userId, req.body.message);
+    const response = await chatbotService.chat(
+      userId,
+      req.body.sessionId,
+      req.body.message
+    );
     res.json(response);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const endChatSession = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+)=> {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const userId = req.user.id;
+    await chatbotService.endSession(userId, req.body.sessionId);
+    res.json({ ok: true });
   } catch (error) {
     next(error);
   }
