@@ -1,10 +1,10 @@
 import { api } from "./api";
-import type { ProgressEntry } from "../types/progress.types";
+import type { ProgressInput, ProgressRecord } from "../types/progress.types";
 
 export const fetchProgress = () =>
-  api<ProgressEntry[]>("/progress");
+  api<ProgressRecord[]>("/progress");
 
-export const submitProgress = (data: ProgressEntry) =>
+export const submitProgress = (data: ProgressInput) =>
   api<void>("/progress", {
     method: "POST",
     body: JSON.stringify(data),

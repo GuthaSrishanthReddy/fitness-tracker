@@ -1,18 +1,7 @@
-import "./UpdateProgress.css";
+import ProgressUpdateForm from "../../components/progress/ProgressUpdateForm";
 
 const UpdateProgress = () => {
-  return (
-    <div className="update-progress">
-      <h2>Update Progress</h2>
-
-      <form className="update-progress__form">
-        <input type="number" placeholder="Weight (kg)" />
-        <input type="number" placeholder="Body Fat (%)" />
-        <input type="number" placeholder="Creatine (mg/dL)" />
-        <button type="submit">Submit</button>
-      </form>
-    </div>
-  );
+  return <ProgressUpdateForm />;
 };
 
 export default UpdateProgress;

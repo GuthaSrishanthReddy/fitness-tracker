@@ -11,7 +11,7 @@ import Login from "../pages/public/Login";
 import Signup from "../pages/public/Signup";
 
 /* User */
-import MyProgress from "../pages/user/MyProgress";
+import UpdateProgress from "../pages/user/UpdateProgress";
 import MyPlan from "../pages/user/MyPlan";
 import MyTrainer from "../pages/user/MyTrainer";
 import ExploreTrainers from "../pages/user/ExploreTrainers";
@@ -44,7 +44,7 @@ const AppRoutes = () => {
       >
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="plan" element={<MyPlan />} />
-        <Route path="progress" element={<MyProgress />} />
+        <Route path="progress" element={<UpdateProgress />} />
         <Route path="my-trainer" element={<MyTrainer />} />
         <Route path="explore-trainers" element={<ExploreTrainers />} />
         <Route path="profile" element={<Profile />} />
