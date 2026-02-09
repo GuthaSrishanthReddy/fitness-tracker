@@ -22,4 +22,3 @@ export const env = {
   NODE_ENV: process.env.NODE_ENV || "development",
   GOOGLE_API_KEY: process.env.GOOGLE_API_KEY as string,
 };
-console.log("GOOGLE_API_KEY loaded?", Boolean(process.env.GOOGLE_API_KEY));
