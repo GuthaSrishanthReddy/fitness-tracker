@@ -1,23 +1,60 @@
 import "./MyPlan.css";
 import { useEffect, useState } from "react";
-import { fetchLatestAiPlan } from "../../services/routine.services";
-import type { PlanItem } from "../../services/routine.services";
+import {
+  fetchLatestAiDiet,
+  fetchLatestAiPlan,
+  fetchLatestAiSupplements,
+} from "../../services/routine.services";
+import type {
+  DietItem,
+  PlanItem,
+  SupplementItem,
+} from "../../services/routine.services";
+import WorkoutPlanSection from "../../components/plan/WorkoutPlanSection";
+import DietPlanSection from "../../components/plan/DietPlanSection";
 
 const MyPlan = () => {
   const [plan, setPlan] = useState<PlanItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [diet, setDiet] = useState<DietItem[]>([]);
+  const [supplements, setSupplements] = useState<SupplementItem[]>([]);
+  const [planLoading, setPlanLoading] = useState(true);
+  const [dietLoading, setDietLoading] = useState(true);
+  const [supplementLoading, setSupplementLoading] = useState(true);
+  const [planError, setPlanError] = useState("");
+  const [dietError, setDietError] = useState("");
+  const [supplementError, setSupplementError] = useState("");
 
   useEffect(() => {
     let isMounted = true;
     const load = async () => {
+      setPlanLoading(true);
+      setDietLoading(true);
+      setSupplementLoading(true);
       try {
-        const data = await fetchLatestAiPlan();
-        if (isMounted) setPlan(data);
-      } catch (err) {
-        if (isMounted) setError("Failed to generate plan");
+        const planData = await fetchLatestAiPlan();
+        if (isMounted) setPlan(planData);
+      } catch {
+        if (isMounted) setPlanError("Failed to load plan");
       } finally {
-        if (isMounted) setLoading(false);
+        if (isMounted) setPlanLoading(false);
+      }
+
+      try {
+        const dietData = await fetchLatestAiDiet();
+        if (isMounted) setDiet(dietData);
+      } catch {
+        if (isMounted) setDietError("Failed to load meals");
+      } finally {
+        if (isMounted) setDietLoading(false);
+      }
+
+      try {
+        const supplementData = await fetchLatestAiSupplements();
+        if (isMounted) setSupplements(supplementData);
+      } catch {
+        if (isMounted) setSupplementError("Failed to load supplements");
+      } finally {
+        if (isMounted) setSupplementLoading(false);
       }
     };
 
@@ -31,29 +68,40 @@ const MyPlan = () => {
     <div className="my-plan">
       <h2>My Plan</h2>
 
+      <WorkoutPlanSection
+        loading={planLoading}
+        error={planError}
+        plan={plan}
+      />
+
+      <DietPlanSection
+        loading={dietLoading}
+        error={dietError}
+        diet={diet}
+      />
       <section>
-        <h3>Workout Plan</h3>
+        <h3>Supplements</h3>
         <div className="workout-plan">
-          {loading && <p>Generating plan...</p>}
-          {error && <p className="error">{error}</p>}
-          {!loading && !error && plan.length === 0 && (
-            <p>No plan yet. Update your progress to generate one.</p>
+          {supplementLoading && <p>Loading supplements...</p>}
+          {supplementError && <p className="error">{supplementError}</p>}
+          {!supplementLoading && !supplementError && supplements.length === 0 && (
+            <p>No supplements suggested.</p>
           )}
-          {!loading && !error && plan.length > 0 && (
+          {!supplementLoading && !supplementError && supplements.length > 0 && (
             <div className="workout-table-wrap">
               <table className="workout-table">
                 <thead>
                   <tr>
-                    <th>Workout</th>
-                    <th>Sets x Reps</th>
+                    <th>Supplement</th>
+                    <th>Dosage</th>
                     <th>Notes</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {plan.map((item, idx) => (
-                    <tr key={`${item.workout}-${idx}`}>
-                      <td>{item.workout}</td>
-                      <td>{item.setsReps}</td>
+                  {supplements.map((item, idx) => (
+                    <tr key={`${item.supplement}-${idx}`}>
+                      <td>{item.supplement}</td>
+                      <td>{item.dosage}</td>
                       <td>{item.notes}</td>
                     </tr>
                   ))}
@@ -63,11 +111,6 @@ const MyPlan = () => {
           )}
         </div>
       </section>
-
-      <section>Meals</section>
-      <section>Supplements</section>
-      <section>Yoga</section>
-      <section>Meditation</section>
     </div>
   );
 };

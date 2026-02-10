@@ -1,4 +1,3 @@
-import { log } from "console";
 import { prisma } from "../config/db";
 import { createEmbedding } from "./embedding.service";
 import { model } from "./model.service";
@@ -6,13 +5,19 @@ import crypto from "crypto";
 
 export const aiPlanService = {
   parsePlanItems(raw: string) {
+    const normalize = (text: string) =>
+      text
+        .replace(/[“”]/g, "\"")
+        .replace(/[‘’]/g, "'")
+        .replace(/^\s*json\s*/i, "")
+        .trim();
+
     const extractJson = (text: string) => {
       const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
       const unfenced = fenceMatch ? fenceMatch[1] : text;
-      const cleaned = unfenced
-        .replace(/^```(?:json)?/i, "")
-        .replace(/```$/i, "")
-        .trim();
+      const cleaned = normalize(
+        unfenced.replace(/^```(?:json)?/i, "").replace(/```$/i, "")
+      );
       const firstArray = cleaned.indexOf("[");
       const firstObj = cleaned.indexOf("{");
       const start =
@@ -30,17 +35,43 @@ export const aiPlanService = {
           : lastObj === -1
           ? lastArray
           : Math.max(lastArray, lastObj);
-      return end >= start ? cleaned.slice(start, end + 1).trim() : cleaned.slice(start).trim();
+      return end >= start
+        ? cleaned.slice(start, end + 1).trim()
+        : cleaned.slice(start).trim();
     };
 
     const jsonText = extractJson(raw);
-    let planItems: Array<{ workout: string; setsReps: string; notes: string }> = [];
+    let planItems: Array<{ workout: string; setsReps: string; notes: string }> =
+      [];
     try {
       const parsed = JSON.parse(jsonText);
       planItems = Array.isArray(parsed) ? parsed : [parsed];
     } catch {
-      planItems = [
-      ];
+      // Attempt simple repair: close missing brackets/braces
+      let repaired = jsonText;
+      if (repaired.startsWith("[") && !repaired.endsWith("]")) repaired += "]";
+      if (repaired.startsWith("{") && !repaired.endsWith("}")) repaired += "}";
+
+      try {
+        const parsed = JSON.parse(repaired);
+        planItems = Array.isArray(parsed) ? parsed : [parsed];
+      } catch {
+        // Last-resort regex extraction
+        const cleaned = normalize(raw);
+        const items: Array<{ workout: string; setsReps: string; notes: string }> =
+          [];
+        const itemRegex =
+          /"workout"\s*:\s*"([^"]+)"[\s\S]*?"(?:setsReps|sets x reps|sets_reps|sets)"\s*:\s*"([^"]*)"[\s\S]*?"notes"\s*:\s*"([^"]*)"/gi;
+        let match: RegExpExecArray | null;
+        while ((match = itemRegex.exec(cleaned)) !== null) {
+          items.push({
+            workout: match[1],
+            setsReps: match[2],
+            notes: match[3],
+          });
+        }
+        planItems = items;
+      }
     }
     return planItems;
   },
@@ -85,6 +116,11 @@ export const aiPlanService = {
 
     const historyText = progressHistory.map((row) => row.content).join("\n");
     const routineText = routineHistory.map((row) => row.content).join("\n");
+    const truncate = (text: string, max: number) =>
+      text.length > max ? `${text.slice(0, max)}\n...` : text;
+
+    const limitedHistory = truncate(historyText, 3500);
+    const limitedRoutine = truncate(routineText, 1500);
 
     const prompt = `
 You are a helpful fitness assistant.
@@ -96,18 +132,31 @@ Return ONLY valid JSON in this exact shape:
 ]
 
 Progress history:
-${historyText}
+${limitedHistory}
 
 Routine history:
-${routineText}
+${limitedRoutine}
 Generate a workout plan based on the above information.`;
 
     const result = await model.generateContent(prompt);
     const raw = result.response.text().trim();
     console.log("RAW_PLAN_RESPONSE:", raw);
 
+    let planItems = aiPlanService.parsePlanItems(raw);
+    if (planItems.length === 0) {
+      const retryPrompt = `
+Return ONLY valid JSON (no code fences, no extra text) in this exact shape:
+[
+  { "workout": "Squats", "setsReps": "2 x 12", "notes": "Light weight, focus on form" }
+]
 
-    const planItems = aiPlanService.parsePlanItems(raw);
+If you cannot use the history, return a generic beginner full-body plan with 5 items.
+`;
+      const retry = await model.generateContent(retryPrompt);
+      const retryRaw = retry.response.text().trim();
+      console.log("RAW_PLAN_RESPONSE_RETRY:", retryRaw);
+      planItems = aiPlanService.parsePlanItems(retryRaw);
+    }
     console.log("Generated plan items:", planItems);
     const planText = JSON.stringify(planItems);
     const planEmbedding = await createEmbedding(planText);
