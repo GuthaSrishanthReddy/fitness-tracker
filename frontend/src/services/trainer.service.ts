@@ -1,5 +1,10 @@
 import { api } from "./api";
 import type { TrainerListItem, TrainerProfile } from "../types/trainer.types";
+import type { ClientListItem } from "../types/client.types";
+
+export const fetchExploreClients = () =>
+  api<ClientListItem[]>("/trainer/explore-clients");
+
 
 export const fetchTrainerProfile = () =>
   api<TrainerProfile>("/trainers/me");
