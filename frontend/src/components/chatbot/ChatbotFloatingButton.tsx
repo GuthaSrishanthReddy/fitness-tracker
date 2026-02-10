@@ -1,25 +1,29 @@
 import "./ChatbotFloatingButton.css";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useAuth } from "../../hooks/useAuth";
+import ChatWindow from "./ChatWindow";
 
 export default function ChatbotFloatingButton() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const isChatPage = location.pathname.toLowerCase() === "/chatbot";
+  const { user } = useAuth();
+  const [open, setOpen] = useState(false);
 
-  if (isChatPage) {
-    return null;
-  }
+  // ❌ hide AI completely when logged out
+  if (!user) return null;
 
   return (
     <>
-      <button
-        type="button"
-        className="chatbot-btn"
-        aria-label="Open AI chat"
-        onClick={() => navigate("/chatBot")}
-      >
-        <span className="chatbot-btn__inner">AI</span>
-      </button>
+      {!open && (
+        <button
+          type="button"
+          className="chatbot-btn"
+          aria-label="Open AI chat"
+          onClick={() => setOpen(true)}
+        >
+          <span className="chatbot-btn__inner">AI</span>
+        </button>
+      )}
+
+      {open && <ChatWindow onClose={() => setOpen(false)} />}
     </>
   );
 }

@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+
 import ChatInput from "./ChatInput";
 import ChatMessage from "./ChatMessage";
 import { askChatbot, endChatSession } from "../../services/chatbot.service";
 import "./ChatWindow.css";
 
 type ChatWindowProps = {
-  onClose?: () => void;
+  onClose :  () => void;
 };
 
 export default function ChatWindow({ onClose }: ChatWindowProps) {
-  const navigate = useNavigate();
+  
   const sessionIdRef = useRef<string>(crypto.randomUUID());
   const endedRef = useRef(false);
   const [input, setInput] = useState("");
@@ -38,12 +38,8 @@ export default function ChatWindow({ onClose }: ChatWindowProps) {
 
   const handleClose = useCallback(() => {
     void endSession();
-    if (onClose) {
       onClose();
-    } else {
-      navigate(-1);
-    }
-  }, [navigate, onClose, endSession]);
+  }, [ onClose, endSession]);
 
   const handleSend = useCallback(async () => {
     const trimmed = input.trim();
