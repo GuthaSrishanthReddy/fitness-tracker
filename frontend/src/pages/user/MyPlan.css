@@ -9,3 +9,37 @@
   border-radius: 8px;
   background-color: #f5f5f5;
 }
+
+.workout-plan {
+  margin-top: 0.75rem;
+}
+
+.workout-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.workout-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.workout-table th,
+.workout-table td {
+  text-align: left;
+  padding: 0.75rem 0.9rem;
+  border-bottom: 1px solid #e6e6e6;
+  vertical-align: top;
+}
+
+.workout-table thead th {
+  background: #f0f0f0;
+  font-weight: 600;
+}
+
+.workout-table tbody tr:last-child td {
+  border-bottom: none;
+}

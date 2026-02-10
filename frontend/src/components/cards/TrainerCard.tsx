@@ -5,7 +5,7 @@ type Props = {
   expertise: string;
 };
 
-const TrainerCard = ({ name, expertise }: Props) => {
+const TrainerCard = ({ name, expertise="" }: Props) => {
   return (
     <div className="trainer-card">
       <h4>{name}</h4>

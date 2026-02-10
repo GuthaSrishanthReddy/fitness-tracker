@@ -32,7 +32,7 @@ const Login = () => {
       // redirect based on role
     
       if (res.user.role === "USER") {
-        navigate("/user/dashboard", { replace: true });
+        navigate("/user/plan", { replace: true });
       } else {
         navigate("/trainer/dashboard", { replace: true });
       }
