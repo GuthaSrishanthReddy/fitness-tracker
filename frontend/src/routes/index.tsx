@@ -10,9 +10,8 @@ import Home from "../pages/public/Home";
 import Login from "../pages/public/Login";
 import Signup from "../pages/public/Signup";
 
-
 /* User */
-import MyProgress from "../pages/user/MyProgress";
+import UpdateProgress from "../pages/user/UpdateProgress";
 import MyPlan from "../pages/user/MyPlan";
 import MyTrainer from "../pages/user/MyTrainer";
 import ExploreTrainers from "../pages/user/ExploreTrainers";
@@ -24,7 +23,7 @@ import MyClients from "../pages/trainer/MyClients";
 import ExploreClients from "../pages/trainer/ExploreClients";
 import ClientDetails from "../pages/trainer/ClientDetails";
 import MyHistory from "../pages/trainer/MyHistory";
-import TrainerProfile from "../pages/trainer/TrainerProfile"
+import TrainerProfile from "../pages/trainer/TrainerProfile";
 
 const AppRoutes = () => {
   return (
@@ -34,45 +33,42 @@ const AppRoutes = () => {
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
 
-      {/* 👤 USER (protected + layout) */}
-<Route
-  path="/user"
-  element={
-    <ProtectedRoute role="USER">
-      <UserLayout />
-    </ProtectedRoute>
-  }
->
-  <Route path="dashboard" element={<Dashboard />} />
-  <Route path="plan" element={<MyPlan />} />
-  <Route path="progress" element={<MyProgress />} />
-  <Route path="my-trainer" element={<MyTrainer />} />
-  <Route path="explore-trainers" element={<ExploreTrainers />} />
-  <Route path="profile" element={<Profile />} />
-  <Route path="user-data" element={<UserDataForm />} />
-  </Route>
-
-      
-      {/* 🧑‍🏫 TRAINER (protected) */}
+      {/* 👤 USER */}
       <Route
-  path="/trainer"
-  element={
-    <ProtectedRoute role="TRAINER">
-      <TrainerLayout />
-    </ProtectedRoute>
-  }
->
-  <Route path="dashboard" element={<TrainerDashboard />} />
-  <Route path="clients" element={<MyClients />} />
-  <Route path="explore-clients" element={<ExploreClients />}/>
-  <Route path="client-details" element={<ClientDetails/>}/>
-  <Route path="history" element={<MyHistory/>}/>
-  <Route path="trainer-profile" element={<TrainerProfile/>}/>
-  {/* other trainer routes */}
-</Route>
+        path="/user"
+        element={
+          <ProtectedRoute role="USER">
+            <UserLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="dashboard" element={<Dashboard />} />
+        <Route path="plan" element={<MyPlan />} />
+        <Route path="progress" element={<UpdateProgress />} />
+        <Route path="my-trainer" element={<MyTrainer />} />
+        <Route path="explore-trainers" element={<ExploreTrainers />} />
+        <Route path="profile" element={<Profile />} />
+        <Route path="user-data" element={<UserDataForm />} />
+      </Route>
 
+      {/* 🧑‍🏫 TRAINER */}
+      <Route
+        path="/trainer"
+        element={
+          <ProtectedRoute role="TRAINER">
+            <TrainerLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="dashboard" element={<TrainerDashboard />} />
+        <Route path="clients" element={<MyClients />} />
+        <Route path="explore-clients" element={<ExploreClients />} />
+        <Route path="client-details" element={<ClientDetails />} />
+        <Route path="history" element={<MyHistory />} />
+        <Route path="profile" element={<TrainerProfile />} />
+      </Route>
 
-      {/* ❌ 404 — NOT redirect */}
+      {/* ❌ 404 */}
       <Route path="*" element={<div>Page not found</div>} />
     </Routes>
   );

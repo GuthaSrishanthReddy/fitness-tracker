@@ -1,0 +1,43 @@
+.recent-progress {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1rem;
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+}
+
+.recent-progress__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.9rem;
+  margin-top: 0.75rem;
+}
+
+.recent-progress__stats div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+  color: #334155;
+}
+
+.recent-progress__stats strong {
+  color: #111827;
+  font-weight: 600;
+}
+
+.recent-progress__note {
+  color: #92400e;
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
+}
+
+.recent-progress__error {
+  color: #b91c1c;
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
+}
+
+.recent-progress__notes {
+  grid-column: 1 / -1;
+}

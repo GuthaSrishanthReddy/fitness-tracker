@@ -50,3 +50,29 @@ export const getMyClients = async (
     next(error);
   }
 };
+
+export const updateTrainerProfile = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const { expertise } = req.body;
+    if (!Array.isArray(expertise)) {
+      return res.status(400).json({ message: "Expertise must be an array" });
+    }
+
+    const trainerId = req.user.id;
+    const updated = await trainerService.updateTrainerProfile(
+      trainerId,
+      expertise
+    );
+    res.json(updated);
+  } catch (error) {
+    next(error);
+  }
+};
