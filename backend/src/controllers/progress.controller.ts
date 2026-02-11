@@ -1,6 +1,9 @@
 import { Response, NextFunction } from "express";
 import { AuthRequest } from "../types/auth.types";
 import { progressService } from "../services/progress.service";
+import { aiPlanService } from "../services/aiPlan.service";
+import { aiDietService } from "../services/aiDiet.service";
+import { aiSupplementService } from "../services/aiSupplement.service";
 
 export const getProgressHistory = async (
   req: AuthRequest,
@@ -35,6 +38,13 @@ export const createOrUpdateProgress = async (
       userId,
       req.body
     );
+    try {
+      await aiPlanService.generatePlan(userId);
+      await aiDietService.generateDiet(userId);
+      await aiSupplementService.generateSupplements(userId);
+    } catch (err) {
+      console.error("Failed to generate AI plan/diet/supplements", err);
+    }
     res.status(201).json(progress);
   } catch (error) {
     next(error);

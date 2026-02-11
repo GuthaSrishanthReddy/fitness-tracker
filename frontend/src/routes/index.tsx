@@ -1,7 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import ProtectedRoute from "./ProtectedRoute";
 import TrainerDashboard from "../pages/trainer/TrainerDashboard";
-import Dashboard from "../pages/user/Dashboard";
 import UserLayout from "../layouts/UserLayout";
 import TrainerLayout from "../layouts/TrainerLayout";
 
@@ -17,6 +16,7 @@ import MyTrainer from "../pages/user/MyTrainer";
 import ExploreTrainers from "../pages/user/ExploreTrainers";
 import Profile from "../pages/user/Profile";
 import UserDataForm from "../pages/user/UserDataForm";
+import ChatBotWindow from "../components/chatbot/ChatWindow";
 
 /* Trainer */
 import MyClients from "../pages/trainer/MyClients";
@@ -42,13 +42,22 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       >
-        <Route path="dashboard" element={<Dashboard />} />
         <Route path="plan" element={<MyPlan />} />
         <Route path="progress" element={<UpdateProgress />} />
         <Route path="my-trainer" element={<MyTrainer />} />
         <Route path="explore-trainers" element={<ExploreTrainers />} />
         <Route path="profile" element={<Profile />} />
         <Route path="user-data" element={<UserDataForm />} />
+      </Route>
+
+      <Route
+        element={
+          <ProtectedRoute role="USER">
+            <UserLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="/chatBot" element={<ChatBotWindow />} />
       </Route>
 
       {/* 🧑‍🏫 TRAINER */}
