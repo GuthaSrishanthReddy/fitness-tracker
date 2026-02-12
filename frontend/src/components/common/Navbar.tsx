@@ -43,7 +43,7 @@ const Navbar = () => {
             <Link to="/trainer/clients">My Clients</Link>
             <Link to="/trainer/explore-clients">Explore Clients</Link>
             <Link to="/trainer/history">My History</Link>
-            <Link to="/trainer/trainer-profile">Profile</Link>
+            <Link to="/trainer/profile">Profile</Link>
           </>
         )}
 

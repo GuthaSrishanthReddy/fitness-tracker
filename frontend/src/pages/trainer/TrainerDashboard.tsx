@@ -40,7 +40,7 @@ const TrainerDashboard = () => {
 
         <div
           className="trainer-dashboard-card"
-          onClick={() => navigate("/trainer/trainer-profile")}
+          onClick={() => navigate("/trainer/profile")}
         >
           <h3>Profile</h3>
           <p>View and edit your profile</p>
