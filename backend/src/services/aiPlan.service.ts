@@ -4,6 +4,26 @@ import { model } from "./model.service";
 import { embeddingStoreService } from "./embeddingStore.service";
 import crypto from "crypto";
 
+const WEEK_DAYS = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+] as const;
+
+type WeekDay = (typeof WEEK_DAYS)[number];
+
+const normalizeDay = (value: unknown, index: number): WeekDay => {
+  const fallback = WEEK_DAYS[index % WEEK_DAYS.length];
+  if (typeof value !== "string") return fallback;
+  const cleaned = value.trim().toLowerCase();
+  const matched = WEEK_DAYS.find((d) => d.toLowerCase() === cleaned);
+  return matched ?? fallback;
+};
+
 export const aiPlanService = {
   parsePlanItems(raw: string) {
     const normalize = (text: string) =>
@@ -42,8 +62,13 @@ export const aiPlanService = {
     };
 
     const jsonText = extractJson(raw);
-    let planItems: Array<{ workout: string; setsReps: string; notes: string }> =
-      [];
+    let planItems: Array<{
+      day?: string;
+      workout?: string;
+      setsReps?: string;
+      sets?: string;
+      notes?: string;
+    }> = [];
     try {
       const parsed = JSON.parse(jsonText);
       planItems = Array.isArray(parsed) ? parsed : [parsed];
@@ -59,22 +84,33 @@ export const aiPlanService = {
       } catch {
         // Last-resort regex extraction
         const cleaned = normalize(raw);
-        const items: Array<{ workout: string; setsReps: string; notes: string }> =
-          [];
+        const items: Array<{
+          day?: string;
+          workout: string;
+          setsReps: string;
+          notes: string;
+        }> = [];
         const itemRegex =
-          /"workout"\s*:\s*"([^"]+)"[\s\S]*?"(?:setsReps|sets x reps|sets_reps|sets)"\s*:\s*"([^"]*)"[\s\S]*?"notes"\s*:\s*"([^"]*)"/gi;
+          /(?:"day"\s*:\s*"([^"]*)")?[\s\S]*?"workout"\s*:\s*"([^"]+)"[\s\S]*?"(?:setsReps|sets x reps|sets_reps|sets)"\s*:\s*"([^"]*)"[\s\S]*?"notes"\s*:\s*"([^"]*)"/gi;
         let match: RegExpExecArray | null;
         while ((match = itemRegex.exec(cleaned)) !== null) {
           items.push({
-            workout: match[1],
-            setsReps: match[2],
-            notes: match[3],
+            day: match[1],
+            workout: match[2],
+            setsReps: match[3],
+            notes: match[4],
           });
         }
         planItems = items;
       }
     }
-    return planItems;
+
+    return planItems.map((item, idx) => ({
+      day: normalizeDay(item.day, idx),
+      workout: String(item.workout ?? "").trim(),
+      setsReps: String(item.setsReps ?? item.sets ?? "").trim(),
+      notes: String(item.notes ?? "").trim(),
+    }));
   },
 
   async getLatestPlan(userId: string) {
@@ -113,7 +149,7 @@ Use the user's progress history and routine history to generate a concise workou
 
 Return ONLY valid JSON in this exact shape:
 [
-  { "workout": "Squats", "setsReps": "2 x 12", "notes": "Light weight, focus on form" }
+  { "day": "Monday", "workout": "Squats", "setsReps": "2 x 12", "notes": "Light weight, focus on form" }
 ]
 
 Progress history:
@@ -132,10 +168,10 @@ Generate a workout plan based on the above information.`;
       const retryPrompt = `
 Return ONLY valid JSON (no code fences, no extra text) in this exact shape:
 [
-  { "workout": "Squats", "setsReps": "2 x 12", "notes": "Light weight, focus on form" }
+  { "day": "Monday", "workout": "Squats", "setsReps": "2 x 12", "notes": "Light weight, focus on form" }
 ]
 
-If you cannot use the history, return a generic beginner full-body plan with 5 items.
+If you cannot use the history, return a generic beginner full-body plan with 5 items and include day for each item.
 `;
       const retry = await model.generateContent(retryPrompt);
       const retryRaw = retry.response.text().trim();

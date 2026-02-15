@@ -1,6 +1,7 @@
 import { api } from "./api";
 
 export type PlanItem = {
+  day: string;
   workout: string;
   setsReps: string;
   notes: string;
