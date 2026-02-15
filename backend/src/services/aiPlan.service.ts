@@ -1,6 +1,7 @@
 import { prisma } from "../config/db";
 import { createEmbedding } from "./embedding.service";
 import { model } from "./model.service";
+import { embeddingStoreService } from "./embeddingStore.service";
 import crypto from "crypto";
 
 export const aiPlanService = {
@@ -77,40 +78,24 @@ export const aiPlanService = {
   },
 
   async getLatestPlan(userId: string) {
-    const latest = await prisma.documentEmbedding.findFirst({
-      where: {
-        userId,
-        source: "plan",
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    const latest = await embeddingStoreService.getLatestBySource(userId, "plan");
 
     if (!latest) return [];
     return aiPlanService.parsePlanItems(latest.content);
   },
 
   async generatePlan(userId: string) {
-    const progressHistory = await prisma.documentEmbedding.findMany({
-      where: {
-        userId,
-        source: "progress",
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
-    
-    const routineHistory = await prisma.documentEmbedding.findMany({
-      where: {
-        userId,
-        source: "routine",
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    const progressHistory = await embeddingStoreService.getBySource(
+      userId,
+      "progress",
+      "desc"
+    );
+
+    const routineHistory = await embeddingStoreService.getBySource(
+      userId,
+      "routine",
+      "desc"
+    );
 
 
 

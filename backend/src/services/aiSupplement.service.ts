@@ -1,6 +1,7 @@
 import { prisma } from "../config/db";
 import { createEmbedding } from "./embedding.service";
 import { model } from "./model.service";
+import { embeddingStoreService } from "./embeddingStore.service";
 import crypto from "crypto";
 
 export const aiSupplementService = {
@@ -77,40 +78,27 @@ export const aiSupplementService = {
   },
 
   async getLatestSupplements(userId: string) {
-    const latest = await prisma.documentEmbedding.findFirst({
-      where: {
-        userId,
-        source: "supplement",
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    const latest = await embeddingStoreService.getLatestBySource(
+      userId,
+      "supplement"
+    );
 
     if (!latest) return [];
     return aiSupplementService.parseSupplementItems(latest.content);
   },
 
   async generateSupplements(userId: string) {
-    const progressHistory = await prisma.documentEmbedding.findMany({
-      where: {
-        userId,
-        source: "progress",
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    const progressHistory = await embeddingStoreService.getBySource(
+      userId,
+      "progress",
+      "desc"
+    );
 
-    const routineHistory = await prisma.documentEmbedding.findMany({
-      where: {
-        userId,
-        source: "routine",
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    const routineHistory = await embeddingStoreService.getBySource(
+      userId,
+      "routine",
+      "desc"
+    );
 
     const historyText = progressHistory.map((row) => row.content).join("\n");
     const routineText = routineHistory.map((row) => row.content).join("\n");

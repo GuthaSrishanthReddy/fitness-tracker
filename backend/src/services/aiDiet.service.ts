@@ -1,6 +1,7 @@
 import { prisma } from "../config/db";
 import { createEmbedding } from "./embedding.service";
 import { model } from "./model.service";
+import { embeddingStoreService } from "./embeddingStore.service";
 import crypto from "crypto";
 
 export const aiDietService = {
@@ -73,40 +74,24 @@ export const aiDietService = {
   },
 
   async getLatestDiet(userId: string) {
-    const latest = await prisma.documentEmbedding.findFirst({
-      where: {
-        userId,
-        source: "diet",
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    const latest = await embeddingStoreService.getLatestBySource(userId, "diet");
 
     if (!latest) return [];
     return aiDietService.parseDietItems(latest.content);
   },
 
   async generateDiet(userId: string) {
-    const progressHistory = await prisma.documentEmbedding.findMany({
-      where: {
-        userId,
-        source: "progress",
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    const progressHistory = await embeddingStoreService.getBySource(
+      userId,
+      "progress",
+      "desc"
+    );
 
-    const routineHistory = await prisma.documentEmbedding.findMany({
-      where: {
-        userId,
-        source: "routine",
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    const routineHistory = await embeddingStoreService.getBySource(
+      userId,
+      "routine",
+      "desc"
+    );
 
     const historyText = progressHistory.map((row) => row.content).join("\n");
     const routineText = routineHistory.map((row) => row.content).join("\n");
@@ -164,4 +149,12 @@ If you cannot use the history, return a generic 1-day meal plan with 4 items.
 
     return dietItems;
   },
+};
+
+export const getDietEmbeddings = async (userId: string) => {
+  return embeddingStoreService.getBySource(userId, "diet", "asc");
+};
+
+export const getRoutineEmbeddings = async (userId: string) => {
+  return embeddingStoreService.getBySource(userId, "routine", "asc");
 };

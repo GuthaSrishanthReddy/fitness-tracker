@@ -2,6 +2,7 @@ import crypto from "crypto";
 import { prisma } from "../config/db";
 import { createEmbedding } from "./embedding.service";
 import { model } from "./model.service";
+import { embeddingStoreService } from "./embeddingStore.service";
 
 const normalizeAiError = (error: any) => {
   const status = error?.status ?? error?.statusCode;
@@ -79,18 +80,26 @@ export const chatbotService = {
         (${crypto.randomUUID()}, ${userId}, ${source}, ${userContent}, ${userEmbedding}::vector)
     `;
 
-    const historyRows = await prisma.$queryRaw<{ content: string }[]>`
-      SELECT content
-      FROM "DocumentEmbedding"
-      WHERE "userId" = ${userId} AND source = ${source}
-      ORDER BY "createdAt" ASC
-    `;
+    const [historyRows, dietRows, routineRows] = await Promise.all([
+      embeddingStoreService.getBySource(userId, source, "asc"),
+      embeddingStoreService.getBySource(userId, "diet", "asc"),
+      embeddingStoreService.getBySource(userId, "routine", "asc"),
+    ]);
 
     const history = historyRows.map((row) => row.content).join("\n");
+    const dietHistory = dietRows.map((row) => row.content).join("\n");
+    const routineHistory = routineRows.map((row) => row.content).join("\n");
 
     const prompt = `
 You are a helpful fitness and nutrition assistant.
 Use the chat history to answer the latest user message.
+
+User details:
+Diet history:
+${dietHistory || "none"}
+
+Routine history:
+${routineHistory || "none"}
 
 Chat history (oldest first):
 ${history}
@@ -110,8 +119,7 @@ Respond to the last user message clearly and concisely.
       VALUES
         (${crypto.randomUUID()}, ${userId}, ${source}, ${aiContent}, ${aiEmbedding}::vector)
     `;
-    
-    
+
     return answer;
   },
 
