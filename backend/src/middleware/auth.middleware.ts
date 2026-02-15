@@ -1,6 +1,7 @@
 import { Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { AuthRequest, JwtUser } from "../types/auth.types";
+import { env } from "../config/env";
 
 export const authMiddleware = (
   req: AuthRequest,
@@ -19,7 +20,7 @@ export const authMiddleware = (
 
     const decoded = jwt.verify(
       token,
-      process.env.JWT_SECRET as string
+      env.JWT_SECRET
     ) as JwtUser;
 
     // decoded now HAS id, email, role

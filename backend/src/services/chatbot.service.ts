@@ -3,6 +3,52 @@ import { prisma } from "../config/db";
 import { createEmbedding } from "./embedding.service";
 import { model } from "./model.service";
 
+const normalizeAiError = (error: any) => {
+  const status = error?.status ?? error?.statusCode;
+  const statusText = String(error?.statusText ?? "");
+
+  const retryAfter = (() => {
+    const details = Array.isArray(error?.errorDetails) ? error.errorDetails : [];
+    const retryInfo = details.find((d: any) =>
+      String(d?.["@type"] ?? "").includes("RetryInfo")
+    );
+    const delay = String(retryInfo?.retryDelay ?? "");
+    const match = delay.match(/(\d+)/);
+    return match ? Number(match[1]) : undefined;
+  })();
+
+  if (status === 429 || statusText.toLowerCase().includes("too many requests")) {
+    const err = new Error(
+      retryAfter
+        ? `AI service rate-limited. Please retry in ${retryAfter}s.`
+        : "AI service rate-limited. Please retry shortly."
+    ) as any;
+    err.statusCode = 429;
+    if (retryAfter) {
+      err.retryAfter = retryAfter;
+    }
+    return err;
+  }
+
+  return error;
+};
+
+const createEmbeddingSafe = async (text: string) => {
+  try {
+    return await createEmbedding(text);
+  } catch (error) {
+    throw normalizeAiError(error);
+  }
+};
+
+const generateContentSafe = async (prompt: string) => {
+  try {
+    return await model.generateContent(prompt);
+  } catch (error) {
+    throw normalizeAiError(error);
+  }
+};
+
 const buildSource = (sessionId: string) => `chat_session:${sessionId}`;
 
 export const chatbotService = {
@@ -10,7 +56,11 @@ export const chatbotService = {
     const normalized = message.trim();
 
     if (!sessionId) {
-      throw new Error("Missing sessionId");
+      const err = new Error("Missing sessionId") as Error & {
+        statusCode?: number;
+      };
+      err.statusCode = 400;
+      throw err;
     }
 
     if (!normalized) {
@@ -20,7 +70,7 @@ export const chatbotService = {
     const source = buildSource(sessionId);
     const userContent = `User: ${normalized}`;
 
-    const userEmbedding = await createEmbedding(userContent);
+    const userEmbedding = await createEmbeddingSafe(userContent);
 
     await prisma.$executeRaw`
       INSERT INTO "DocumentEmbedding"
@@ -48,11 +98,11 @@ ${history}
 Respond to the last user message clearly and concisely.
 `;
 
-    const result = await model.generateContent(prompt);
+    const result = await generateContentSafe(prompt);
     const answer = result.response.text();
 
     const aiContent = `AI: ${answer}`;
-    const aiEmbedding = await createEmbedding(aiContent);
+    const aiEmbedding = await createEmbeddingSafe(aiContent);
 
     await prisma.$executeRaw`
       INSERT INTO "DocumentEmbedding"
@@ -67,7 +117,11 @@ Respond to the last user message clearly and concisely.
 
   async endSession(userId: string, sessionId: string) {
     if (!sessionId) {
-      throw new Error("Missing sessionId");
+      const err = new Error("Missing sessionId") as Error & {
+        statusCode?: number;
+      };
+      err.statusCode = 400;
+      throw err;
     }
 
     const source = buildSource(sessionId);

@@ -1,4 +1,7 @@
-const BASE = import.meta.env.VITE_API_BASE_URL || "";
+const configuredBase = import.meta.env.VITE_API_BASE_URL as string | undefined;
+const BASE = configuredBase
+  ? configuredBase.replace(/\/$/, "")
+  : "/api";
 
 export async function api<T>(url: string, options?: RequestInit): Promise<T> {
   const token = localStorage.getItem("token");

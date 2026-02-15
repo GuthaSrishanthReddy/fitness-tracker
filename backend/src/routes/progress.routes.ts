@@ -6,11 +6,13 @@ import {
 } from "../controllers/progress.controller";
 
 import { authMiddleware } from "../middleware/auth.middleware";
+import { validate } from "../middleware/validate.middleware";
+import { progressSchema } from "../validators/progress.achema";
 
 const router = Router();
 
 router.get("/", authMiddleware, getProgressHistory);
 
-router.post("/", authMiddleware, createOrUpdateProgress);
+router.post("/", authMiddleware, validate(progressSchema), createOrUpdateProgress);
 
 export default router;

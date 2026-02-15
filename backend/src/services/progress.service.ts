@@ -24,7 +24,11 @@ export const progressService = {
     });
 
     if (existing) {
-      throw new Error("Progress already updated today");
+      const err = new Error("Progress already updated today") as Error & {
+        statusCode?: number;
+      };
+      err.statusCode = 409;
+      throw err;
     }
 
     // 1️⃣ Save progress

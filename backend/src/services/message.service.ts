@@ -11,7 +11,9 @@ export const messageService = {
     });
 
     if (!conversation) {
-      throw new Error("Forbidden");
+      const err = new Error("Forbidden") as Error & { statusCode?: number };
+      err.statusCode = 403;
+      throw err;
     }
 
     return prisma.message.findMany({
@@ -34,7 +36,9 @@ export const messageService = {
     });
 
     if (!conversation) {
-      throw new Error("Forbidden");
+      const err = new Error("Forbidden") as Error & { statusCode?: number };
+      err.statusCode = 403;
+      throw err;
     }
 
     return prisma.message.create({

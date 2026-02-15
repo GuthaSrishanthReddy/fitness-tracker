@@ -12,7 +12,12 @@ export const getMe = async (
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    res.json({ userId: req.user.id });
+    const user = await userService.getMe(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json(user);
   } catch (error) {
     next(error);
   }

@@ -35,9 +35,22 @@ export const trainerService = {
     }
   },
 
-  async getMyClients(trainerId: string) {
+  async getMyClients(trainerUserId: string) {
+    const trainer = await prisma.trainer.findUnique({
+      where: { userId: trainerUserId },
+      select: { id: true }
+    });
+
+    if (!trainer) {
+      const err = new Error("Trainer profile not found") as Error & {
+        statusCode?: number;
+      };
+      err.statusCode = 404;
+      throw err;
+    }
+
     return prisma.clientTrainer.findMany({
-      where: { trainerId },
+      where: { trainerId: trainer.id },
       include: {
         user: {
           select: {

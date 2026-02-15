@@ -9,6 +9,7 @@ import dietRoutes from "./diet.routes";
 import supplementRoutes from "./supplement.routes";
 import messageRoutes from "./message.routes";
 import aiRoutes from "./ai.routes";
+import rulesRoutes from "./rules.routes";
 
 const router = Router();
 
@@ -21,5 +22,6 @@ router.use("/diet", dietRoutes);
 router.use("/supplements", supplementRoutes);
 router.use("/messages", messageRoutes);
 router.use("/ai", aiRoutes);
+router.use("/rules", rulesRoutes);
 
 export default router;
