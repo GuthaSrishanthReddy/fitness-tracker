@@ -4,11 +4,11 @@ import { useAuth } from "../../hooks/useAuth";
 import ChatWindow from "./ChatWindow";
 
 export default function ChatbotFloatingButton() {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const [open, setOpen] = useState(false);
 
-  // ❌ hide AI completely when logged out
-  if (!user) return null;
+  // Hide AI while auth state loads or for non-users.
+  if (isLoading || !user || user.role !== "USER") return null;
 
   return (
     <>
@@ -23,7 +23,11 @@ export default function ChatbotFloatingButton() {
         </button>
       )}
 
-      {open && <ChatWindow onClose={() => setOpen(false)} />}
+      {open && (
+        <div className="chatbot-float__window" role="dialog" aria-modal="false">
+          <ChatWindow onClose={() => setOpen(false)} />
+        </div>
+      )}
     </>
   );
 }

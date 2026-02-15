@@ -1,9 +1,10 @@
+import type { ReactElement } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
 type Props = {
   allowedRole: "USER" | "TRAINER";
-  children: JSX.Element;
+  children: ReactElement;
 };
 
 const RoleBasedRoute = ({ allowedRole, children }: Props) => {

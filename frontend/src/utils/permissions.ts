@@ -1,4 +1,4 @@
-import { Role } from "../types/auth.types";
+import type { UserRole } from "../types/auth.types";
 
-export const canAccessUser = (role: Role) => role === "USER";
-export const canAccessTrainer = (role: Role) => role === "TRAINER";
+export const canAccessUser = (role: UserRole) => role === "USER";
+export const canAccessTrainer = (role: UserRole) => role === "TRAINER";

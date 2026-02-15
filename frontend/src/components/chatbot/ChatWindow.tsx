@@ -6,7 +6,7 @@ import { askChatbot, endChatSession } from "../../services/chatbot.service";
 import "./ChatWindow.css";
 
 type ChatWindowProps = {
-  onClose :  () => void;
+  onClose?: () => void;
 };
 
 export default function ChatWindow({ onClose }: ChatWindowProps) {
@@ -15,6 +15,7 @@ export default function ChatWindow({ onClose }: ChatWindowProps) {
   const endedRef = useRef(false);
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [messages, setMessages] = useState<
     { id: string; sender: "user" | "ai"; text: string }[]
   >([
@@ -38,7 +39,7 @@ export default function ChatWindow({ onClose }: ChatWindowProps) {
 
   const handleClose = useCallback(() => {
     void endSession();
-      onClose();
+    onClose?.();
   }, [ onClose, endSession]);
 
   const handleSend = useCallback(async () => {
@@ -97,13 +98,21 @@ export default function ChatWindow({ onClose }: ChatWindowProps) {
   }, [messages.length]);
 
   return (
-    <div className="chat-window">
+    <div className={`chat-window${isFullscreen ? " chat-window--fullscreen" : ""}`}>
       <header className="chat-window__header">
         <div>
           <p className="chat-window__title">AI Coach</p>
           <p className="chat-window__subtitle">Fitness guidance on demand</p>
         </div>
         <div className="chat-window__header-actions">
+          <button
+            type="button"
+            className="chat-window__close"
+            aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+            onClick={() => setIsFullscreen((prev) => !prev)}
+          >
+            {isFullscreen ? "Exit" : "Full"}
+          </button>
           <button
             type="button"
             className="chat-window__close"

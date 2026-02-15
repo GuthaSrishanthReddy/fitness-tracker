@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import { api } from "../../services/api";
 
 type FitnessGoal =
     | "FAT_LOSS"
@@ -64,17 +64,9 @@ export default function UserDataForm() {
                 setLoadingActivities(true);
                 setActivity("");
 
-                const res = await axios.get<RuleResponse[]>(
-                    `/api/rules/activities`,
-                    {
-                        params: {
-                            goal,
-                            level
-                        }
-                    }
-                );
-
-                setAllowedActivities(res.data.map(r => r.activity));
+                const params = new URLSearchParams({ goal, level });
+                const data = await api<RuleResponse[]>(`/rules/activities?${params.toString()}`);
+                setAllowedActivities(data.map((r) => r.activity));
             } catch (error) {
                 console.error("Failed to fetch activities", error);
                 setAllowedActivities([]);
