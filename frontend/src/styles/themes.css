@@ -1,5 +1,1 @@
-/* The default theme is already dark and mind bending. 
-   Light mode could be supported later, but for this redesign we are fully leaning into neon dark. */
-body.light-mode-legacy {
-    filter: invert(1) hue-rotate(180deg);
-}
+/* We now use CSS variable overrides in variables.css for the light/dark modes. */

@@ -10,7 +10,7 @@ type ChatWindowProps = {
 };
 
 export default function ChatWindow({ onClose }: ChatWindowProps) {
-  
+
   const sessionIdRef = useRef<string>(crypto.randomUUID());
   const endedRef = useRef(false);
   const [input, setInput] = useState("");
@@ -40,7 +40,7 @@ export default function ChatWindow({ onClose }: ChatWindowProps) {
   const handleClose = useCallback(() => {
     void endSession();
     onClose?.();
-  }, [ onClose, endSession]);
+  }, [onClose, endSession]);
 
   const handleSend = useCallback(async () => {
     const trimmed = input.trim();
@@ -82,10 +82,20 @@ export default function ChatWindow({ onClose }: ChatWindowProps) {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Don't trigger hotkeys if the user is typing in an input
+      const tagName = document.activeElement?.tagName.toLowerCase();
+      if (tagName === "input" || tagName === "textarea") {
+        return;
+      }
+
       if (event.key === "Escape") {
         handleClose();
       }
+      if (event.key === "f" || event.key === "F") {
+        setIsFullscreen((prev) => !prev);
+      }
     };
+
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
@@ -112,6 +122,7 @@ export default function ChatWindow({ onClose }: ChatWindowProps) {
             onClick={() => setIsFullscreen((prev) => !prev)}
           >
             {isFullscreen ? "Exit" : "Full"}
+
           </button>
           <button
             type="button"
