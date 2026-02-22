@@ -15,6 +15,12 @@ const WEEK_DAYS = [
 ] as const;
 
 type WeekDay = (typeof WEEK_DAYS)[number];
+type PlanItem = {
+  day: WeekDay;
+  workout: string;
+  setsReps: string;
+  notes: string;
+};
 
 const normalizeDay = (value: unknown, index: number): WeekDay => {
   const fallback = WEEK_DAYS[index % WEEK_DAYS.length];
@@ -22,6 +28,15 @@ const normalizeDay = (value: unknown, index: number): WeekDay => {
   const cleaned = value.trim().toLowerCase();
   const matched = WEEK_DAYS.find((d) => d.toLowerCase() === cleaned);
   return matched ?? fallback;
+};
+
+const generatePlanContent = async (prompt: string) => {
+  return model.generateContent({
+    contents: [{ role: "user", parts: [{ text: prompt }] }],
+    generationConfig: {
+      responseMimeType: "application/json",
+    },
+  } as any);
 };
 
 export const aiPlanService = {
@@ -105,12 +120,14 @@ export const aiPlanService = {
       }
     }
 
-    return planItems.map((item, idx) => ({
-      day: normalizeDay(item.day, idx),
-      workout: String(item.workout ?? "").trim(),
-      setsReps: String(item.setsReps ?? item.sets ?? "").trim(),
-      notes: String(item.notes ?? "").trim(),
-    }));
+    return planItems
+      .map((item, idx) => ({
+        day: normalizeDay(item.day, idx),
+        workout: String(item.workout ?? "").trim(),
+        setsReps: String(item.setsReps ?? item.sets ?? "").trim(),
+        notes: String(item.notes ?? "").trim(),
+      }))
+      .filter((item) => item.workout.length > 0);
   },
 
   async getLatestPlan(userId: string) {
@@ -133,8 +150,6 @@ export const aiPlanService = {
       "desc"
     );
 
-
-
     const historyText = progressHistory.map((row) => row.content).join("\n");
     const routineText = routineHistory.map((row) => row.content).join("\n");
     const truncate = (text: string, max: number) =>
@@ -151,6 +166,7 @@ Return ONLY valid JSON in this exact shape:
 [
   { "day": "Monday", "workout": "Squats", "setsReps": "2 x 12", "notes": "Light weight, focus on form" }
 ]
+Generate the plan based on the workout frequency per week
 
 Progress history:
 ${limitedHistory}
@@ -159,11 +175,20 @@ Routine history:
 ${limitedRoutine}
 Generate a workout plan based on the above information.`;
 
-    const result = await model.generateContent(prompt);
-    const raw = result.response.text().trim();
-    console.log("RAW_PLAN_RESPONSE:", raw);
+    let planItems: PlanItem[] = [];
+    let latestRaw = "";
+    let modelFailure: unknown;
+    try {
+      const result = await generatePlanContent(prompt);
+      const raw = result.response.text().trim();
+      latestRaw = raw;
+      console.log("RAW_PLAN_RESPONSE:", raw);
+      planItems = aiPlanService.parsePlanItems(raw);
+    } catch (error) {
+      modelFailure = error;
+      console.error("Plan generation model call failed", error);
+    }
 
-    let planItems = aiPlanService.parsePlanItems(raw);
     if (planItems.length === 0) {
       const retryPrompt = `
 Return ONLY valid JSON (no code fences, no extra text) in this exact shape:
@@ -171,13 +196,65 @@ Return ONLY valid JSON (no code fences, no extra text) in this exact shape:
   { "day": "Monday", "workout": "Squats", "setsReps": "2 x 12", "notes": "Light weight, focus on form" }
 ]
 
-If you cannot use the history, return a generic beginner full-body plan with 5 items and include day for each item.
+If you cannot use the history, return a generic beginner full-body plan with 5 items and include day for each item. use all the details you can use .
 `;
-      const retry = await model.generateContent(retryPrompt);
-      const retryRaw = retry.response.text().trim();
-      console.log("RAW_PLAN_RESPONSE_RETRY:", retryRaw);
-      planItems = aiPlanService.parsePlanItems(retryRaw);
+      try {
+        const retry = await generatePlanContent(retryPrompt);
+        const retryRaw = retry.response.text().trim();
+        latestRaw = retryRaw;
+        console.log("RAW_PLAN_RESPONSE_RETRY:", retryRaw);
+        planItems = aiPlanService.parsePlanItems(retryRaw);
+      } catch (error) {
+        modelFailure = error;
+        console.error("Plan generation retry failed", error);
+      }
     }
+
+    if (planItems.length === 0 && latestRaw) {
+      const repairPrompt = `
+Convert this workout-plan response into strict valid JSON only.
+
+Required output schema:
+[
+  { "day": "Monday", "workout": "Squats", "setsReps": "2 x 12", "notes": "Light weight, focus on form" }
+]
+
+Rules:
+- Output only JSON array.
+- Use one item per workout day.
+- Keep original meaning, do not invent medical claims.
+- Ensure "workout" is never empty.
+
+Input to convert:
+${latestRaw}
+`;
+      try {
+        const repaired = await generatePlanContent(repairPrompt);
+        const repairedRaw = repaired.response.text().trim();
+        console.log("RAW_PLAN_RESPONSE_REPAIRED:", repairedRaw);
+        planItems = aiPlanService.parsePlanItems(repairedRaw);
+      } catch (error) {
+        modelFailure = error;
+        console.error("Plan generation repair failed", error);
+      }
+    }
+
+    if (planItems.length === 0) {
+      const details =
+        modelFailure && typeof modelFailure === "object" && "message" in (modelFailure as any)
+          ? String((modelFailure as any).message)
+          : "";
+      const err = new Error(
+        details
+          ? `Failed to generate a valid AI workout plan: ${details}`
+          : "Failed to generate a valid AI workout plan"
+      ) as Error & {
+        statusCode?: number;
+      };
+      err.statusCode = 502;
+      throw err;
+    }
+
     console.log("Generated plan items:", planItems);
     const planText = JSON.stringify(planItems);
     const planEmbedding = await createEmbedding(planText);

@@ -4,6 +4,8 @@ type WorkoutPlanSectionProps = {
   loading: boolean;
   error: string;
   plan: PlanItem[];
+  generating: boolean;
+  onGeneratePlan: () => Promise<void>;
 };
 
 const dayOrder = [
@@ -16,7 +18,13 @@ const dayOrder = [
   "Sunday",
 ];
 
-const WorkoutPlanSection = ({ loading, error, plan }: WorkoutPlanSectionProps) => {
+const WorkoutPlanSection = ({
+  loading,
+  error,
+  plan,
+  generating,
+  onGeneratePlan,
+}: WorkoutPlanSectionProps) => {
   const sortedPlan = [...plan].sort((a, b) => {
     const aIdx = dayOrder.indexOf(a.day);
     const bIdx = dayOrder.indexOf(b.day);
@@ -27,7 +35,17 @@ const WorkoutPlanSection = ({ loading, error, plan }: WorkoutPlanSectionProps) =
 
   return (
     <section>
-      <h3>Workout Plan</h3>
+      <div className="section-header">
+        <h3>Workout Plan</h3>
+        <button
+          type="button"
+          className="plan-generate-btn"
+          onClick={onGeneratePlan}
+          disabled={loading || generating}
+        >
+          {generating ? "Generating..." : "Generate Plan"}
+        </button>
+      </div>
       <div className="workout-plan">
         {loading && <p>Loading plan...</p>}
         {error && <p className="error">{error}</p>}

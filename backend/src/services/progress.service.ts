@@ -13,33 +13,62 @@ export const progressService = {
   async createOrUpdateProgress(userId: string, data: any) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
 
-    const existing = await prisma.progress.findFirst({
+    const existingToday = await prisma.progress.findFirst({
       where: {
         userId,
         createdAt: {
           gte: today,
+          lt: tomorrow,
         },
       },
+      orderBy: { createdAt: "desc" },
     });
 
-    if (existing) {
-      const err = new Error("Progress already updated today") as Error & {
-        statusCode?: number;
-      };
-      err.statusCode = 409;
-      throw err;
+    const lastProgress = await prisma.progress.findFirst({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const mergedData = { ...data };
+    const baseProgress = existingToday ?? lastProgress;
+
+    if (baseProgress) {
+      for (const key of Object.keys(baseProgress)) {
+        if (key !== "id" && key !== "userId" && key !== "createdAt" && key !== "updatedAt") {
+          if (mergedData[key] === undefined || mergedData[key] === null) {
+            mergedData[key] = (baseProgress as any)[key];
+          }
+        }
+      }
+    } else {
+      mergedData.bodyFat = mergedData.bodyFat ?? 15;
+      mergedData.systolicBP = mergedData.systolicBP ?? 120;
+      mergedData.diastolicBP = mergedData.diastolicBP ?? 80;
+      mergedData.restingHeartRate = mergedData.restingHeartRate ?? 70;
+      mergedData.creatinine = mergedData.creatinine ?? 0.9;
+      mergedData.workoutFrequency = mergedData.workoutFrequency ?? 3;
+      mergedData.workoutDuration = mergedData.workoutDuration ?? 45;
+      mergedData.cardioMinutes = mergedData.cardioMinutes ?? 0;
+      mergedData.sleepHours = mergedData.sleepHours ?? 7;
+      mergedData.stressLevel = mergedData.stressLevel ?? 3;
     }
 
-    // 1️⃣ Save progress
-    const progress = await prisma.progress.create({
-      data: {
-        userId,
-        ...data,
-      },
-    });
+    // Save progress: update today's entry if it exists, otherwise create a new one.
+    const progress = existingToday
+      ? await prisma.progress.update({
+          where: { id: existingToday.id },
+          data: mergedData,
+        })
+      : await prisma.progress.create({
+          data: {
+            userId,
+            ...mergedData,
+          },
+        });
 
-    // 2️⃣ Convert progress → text
     const text = `
 Date: ${progress.createdAt}
 Weight: ${progress.weight} kg
@@ -61,10 +90,8 @@ Stress Level: ${progress.stressLevel}
 Notes: ${progress.notes ?? "None"}
 `;
 
-    // 3️⃣ Create embedding
     const embedding = await createEmbedding(text);
 
-    // 4️⃣ Insert embedding safely (NO string building)
     await prisma.$executeRaw`
       INSERT INTO "DocumentEmbedding"
         (id, "userId", source, content, embedding)

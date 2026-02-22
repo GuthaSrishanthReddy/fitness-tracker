@@ -15,15 +15,21 @@ const Navbar = () => {
 
   return (
     <nav className="navbar">
-      <Link to="/" className="navbar__logo">
-        FitnessTracker
-      </Link>
+      {!user && (
+        <Link to="/" className="navbar__logo">
+          FitnessTracker
+        </Link>
+      )}
+      {user && (
+        <Link to="/user/plan" className="navbar__logo">
+          FitnessTracker
+        </Link>
+      )}
 
       <div className="navbar__links">
         {!user && (
           <>
-            <Link to="/login">Login</Link>
-            <Link to="/signup">Signup</Link>
+            Login or Signup to access features
           </>
         )}
 

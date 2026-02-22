@@ -7,7 +7,7 @@ import {
 
 import { authMiddleware } from "../middleware/auth.middleware";
 import { validate } from "../middleware/validate.middleware";
-import { progressSchema } from "../validators/progress.achema";
+import { progressSchema } from "../validators/progress.schema";
 
 const router = Router();
 
