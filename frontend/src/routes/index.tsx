@@ -5,6 +5,8 @@ import UserLayout from "../layouts/UserLayout";
 import TrainerLayout from "../layouts/TrainerLayout";
 
 /* Public */
+import PublicRoute from "./PublicRoute";
+import PublicLayout from "../layouts/PublicLayout";
 import Home from "../pages/public/Home";
 import Login from "../pages/public/Login";
 import Signup from "../pages/public/Signup";
@@ -29,9 +31,36 @@ const AppRoutes = () => {
   return (
     <Routes>
       {/* 🌍 Public */}
-      <Route path="/" element={<Home />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/signup" element={<Signup />} />
+      <Route
+        path="/"
+        element={
+          <PublicRoute>
+            <PublicLayout>
+              <Home />
+            </PublicLayout>
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/login"
+        element={
+          <PublicRoute>
+            <PublicLayout>
+              <Login />
+            </PublicLayout>
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/signup"
+        element={
+          <PublicRoute>
+            <PublicLayout>
+              <Signup />
+            </PublicLayout>
+          </PublicRoute>
+        }
+      />
 
       {/* 👤 USER */}
       <Route

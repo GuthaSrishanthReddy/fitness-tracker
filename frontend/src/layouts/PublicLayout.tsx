@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-
+import Navbar from "../components/common/Navbar";
+import "./PublicLayout.css";
 
 interface PublicLayoutProps {
   children: ReactNode;
@@ -7,9 +8,11 @@ interface PublicLayoutProps {
 
 const PublicLayout = ({ children }: PublicLayoutProps) => {
   return (
-    <div>
-      {/* existing navbar / header stays exactly the same */}
-      {children}
+    <div className="public-layout">
+      <Navbar />
+      <main className="public-layout__content">
+        {children}
+      </main>
     </div>
   );
 };

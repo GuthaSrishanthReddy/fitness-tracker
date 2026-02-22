@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { loginApi } from "../../services/auth.service";
 import { useAuth } from "../../hooks/useAuth";
 
@@ -30,13 +30,13 @@ const Login = () => {
 
       // redirect based on role
       // redirect based on role
-    
+
       if (res.user.role === "USER") {
         navigate("/user/plan", { replace: true });
       } else {
         navigate("/trainer/dashboard", { replace: true });
       }
-      
+
     } catch (err) {
       setError("Invalid email or password");
     }
@@ -66,6 +66,10 @@ const Login = () => {
         />
 
         <button type="submit">Login</button>
+
+        <div className="login__footer">
+          Don't have an account? <Link to="/signup">Sign up</Link>
+        </div>
       </form>
     </div>
   );

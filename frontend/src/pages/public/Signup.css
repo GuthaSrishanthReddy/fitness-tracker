@@ -92,3 +92,23 @@
   border-radius: var(--radius-sm);
   border: 1px solid rgba(255, 0, 85, 0.3);
 }
+
+.signup__footer {
+  margin-top: 1rem;
+  text-align: center;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+}
+
+.signup__footer a {
+  color: var(--accent-cyan);
+  text-decoration: none;
+  font-weight: 600;
+  transition: all var(--transition-fast);
+  margin-left: 0.3rem;
+}
+
+.signup__footer a:hover {
+  color: var(--text-primary);
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.6);
+}
