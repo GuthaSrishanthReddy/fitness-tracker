@@ -1,1 +1,5 @@
-body.dark { background: #111; color: white; }
+/* The default theme is already dark and mind bending. 
+   Light mode could be supported later, but for this redesign we are fully leaning into neon dark. */
+body.light-mode-legacy {
+    filter: invert(1) hue-rotate(180deg);
+}

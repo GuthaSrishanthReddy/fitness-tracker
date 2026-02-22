@@ -4,7 +4,7 @@
   padding: 1.5rem 0 2rem;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
 .progress-update__header {
@@ -14,84 +14,116 @@
 }
 
 .progress-update__banner {
-  background: #fff4d6;
-  border: 1px solid #f1d08b;
-  color: #6a4a00;
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
+  background: rgba(255, 170, 0, 0.1);
+  border: 1px solid rgba(255, 170, 0, 0.3);
+  color: #ffaa00;
+  padding: 1rem;
+  border-radius: var(--radius-md);
   font-size: 0.95rem;
+  backdrop-filter: var(--glass-blur);
 }
 
 .progress-update__form {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 1.25rem;
-  background: #fff;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+  gap: 1.5rem;
+  border: var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  background: var(--bg-surface);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-shadow);
 }
 
 .progress-update__grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
 .progress-update__grid label,
 .progress-update__notes {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
-  font-size: 0.9rem;
-  color: #334155;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
 }
 
 .progress-update__grid input,
 .progress-update__notes textarea {
-  padding: 0.55rem 0.7rem;
-  border-radius: 8px;
-  border: 1px solid #cfd6e4;
-  font-size: 0.95rem;
+  padding: 0.8rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 1rem;
+  color: var(--text-primary);
+  font-family: var(--font-main);
+  transition: all var(--transition-fast);
+}
+
+.progress-update__grid input:focus,
+.progress-update__notes textarea:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
 }
 
 .progress-update__notes textarea {
-  min-height: 90px;
+  min-height: 120px;
   resize: vertical;
 }
 
 .progress-update__note {
-  color: #92400e;
+  color: #ffaa00;
   margin: 0;
   font-size: 0.9rem;
 }
 
 .progress-update__error {
-  color: #b91c1c;
+  color: var(--accent-pink);
   margin: 0;
   font-size: 0.9rem;
 }
 
 .progress-update__success {
-  color: #15803d;
+  color: var(--accent-cyan);
   margin: 0;
   font-size: 0.9rem;
 }
 
 .progress-update__btn {
   align-self: flex-start;
-  padding: 0.6rem 1rem;
-  border-radius: 8px;
-  border: 1px solid #cfd6e4;
-  background: #fff;
+  padding: 0.8rem 1.5rem;
+  border-radius: var(--radius-pill);
+  border: var(--glass-border);
+  background: rgba(255, 255, 255, 0.05);
   cursor: pointer;
+  color: var(--text-primary);
+  font-weight: 600;
+  transition: all var(--transition-fast);
+}
+
+.progress-update__btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+  transform: translateY(-2px);
 }
 
 .progress-update__btn--primary {
-  background: #1f2937;
-  color: #fff;
-  border-color: #1f2937;
+  background: var(--gradient-neon);
+  border: none;
+  box-shadow: 0 4px 15px rgba(157, 78, 221, 0.4);
+}
+
+.progress-update__btn--primary:hover {
+  background: var(--gradient-neon);
+  border: none;
+  box-shadow: 0 6px 20px rgba(255, 0, 85, 0.4);
+  transform: translateY(-2px);
 }
 
 @media (max-width: 640px) {
@@ -100,6 +132,6 @@
   }
 
   .progress-update__form {
-    padding: 1rem;
+    padding: 1.5rem;
   }
 }

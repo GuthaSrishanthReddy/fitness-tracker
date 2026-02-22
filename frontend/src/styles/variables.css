@@ -1,3 +1,42 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
 :root {
-  --primary: #000;
+  /* deep space dark */
+  --bg-color: #030305;
+  --bg-surface: rgba(15, 15, 20, 0.6);
+  --bg-surface-hover: rgba(25, 25, 35, 0.8);
+
+  /* text */
+  --text-primary: #f0f0f5;
+  --text-secondary: #a0a0b5;
+  
+  /* neon accents */
+  --accent-cyan: #00f0ff;
+  --accent-purple: #9d4edd;
+  --accent-pink: #ff0055;
+  
+  /* gradients */
+  --gradient-neon: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+  --gradient-hot: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+  
+  /* glassmorphism */
+  --glass-border: 1px solid rgba(255, 255, 255, 0.08);
+  --glass-border-hover: 1px solid rgba(0, 240, 255, 0.4);
+  --glass-blur: blur(12px);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+  --glow-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+
+  /* typography */
+  --font-main: 'Outfit', sans-serif;
+  --font-display: 'Space Grotesk', sans-serif;
+
+  /* spacing and borders */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-pill: 9999px;
+
+  /* transitions */
+  --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-smooth: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
