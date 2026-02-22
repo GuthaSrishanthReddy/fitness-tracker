@@ -44,6 +44,16 @@
   margin-top: 1rem;
 }
 
+.plan-banner {
+  margin-bottom: 0.9rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 187, 0, 0.5);
+  background: rgba(255, 187, 0, 0.12);
+  color: #ffd666;
+  font-size: 0.95rem;
+}
+
 .workout-table-wrap {
   width: 100%;
   overflow-x: auto;
@@ -82,5 +92,53 @@
 }
 
 .workout-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.workout-row--active {
+  background: rgba(0, 229, 255, 0.08);
+}
+
+.day-select-btn {
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: 600;
+  padding: 0;
+  cursor: pointer;
+}
+
+.day-select-btn:hover {
+  color: var(--accent-cyan);
+}
+
+.workout-row-detail td {
+  padding: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 229, 255, 0.04);
+}
+
+.day-detail-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.day-detail-table th,
+.day-detail-table td {
+  text-align: left;
+  padding: 0.85rem 1.2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.day-detail-table thead th {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--accent-cyan);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.day-detail-table tbody tr:last-child td {
   border-bottom: none;
 }

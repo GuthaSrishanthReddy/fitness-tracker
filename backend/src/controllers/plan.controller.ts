@@ -50,8 +50,8 @@ export const generateAiPlan = async (
     }
 
     const userId = req.user.id;
-    const planItems = await aiPlanService.generatePlan(userId);
-    res.json(planItems);
+    const result = await aiPlanService.generatePlan(userId);
+    res.json(result);
   } catch (error) {
     next(error);
   }

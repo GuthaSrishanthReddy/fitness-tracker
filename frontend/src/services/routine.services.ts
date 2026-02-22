@@ -1,10 +1,19 @@
 import { api } from "./api";
 
-export type PlanItem = {
-  day: string;
-  workout: string;
+export type PlanWorkout = {
+  workoutName: string;
   setsReps: string;
   notes: string;
+};
+
+export type PlanItem = {
+  day: string;
+  workouts: PlanWorkout[];
+};
+export type GeneratePlanResponse = {
+  plan: PlanItem[];
+  usedFallback: boolean;
+  banner?: string;
 };
 
 export type DietItem = {
@@ -20,7 +29,7 @@ export type SupplementItem = {
 };
 
 export const generateAiPlan = () =>
-  api<PlanItem[]>("/plans/ai", {
+  api<GeneratePlanResponse>("/plans/ai", {
     method: "POST",
   });
 

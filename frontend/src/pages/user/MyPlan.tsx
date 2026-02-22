@@ -23,6 +23,7 @@ const MyPlan = () => {
   const [dietLoading, setDietLoading] = useState(true);
   const [supplementLoading, setSupplementLoading] = useState(true);
   const [planError, setPlanError] = useState("");
+  const [planBanner, setPlanBanner] = useState("");
   const [dietError, setDietError] = useState("");
   const [supplementError, setSupplementError] = useState("");
 
@@ -34,7 +35,10 @@ const MyPlan = () => {
       setSupplementLoading(true);
       try {
         const planData = await fetchLatestAiPlan();
-        if (isMounted) setPlan(planData);
+        if (isMounted) {
+          setPlan(planData);
+          setPlanBanner("");
+        }
       } catch {
         if (isMounted) setPlanError("Failed to load plan");
       } finally {
@@ -68,11 +72,13 @@ const MyPlan = () => {
 
   const handleGeneratePlan = async () => {
     setPlanError("");
+    setPlanBanner("");
     setPlanGenerating(true);
     try {
-      const planData = await generateAiPlan();
-      setPlan(planData);
-      if (planData.length === 0) {
+      const result = await generateAiPlan();
+      setPlan(result.plan);
+      setPlanBanner(result.banner ?? "");
+      if (result.plan.length === 0) {
         setPlanError("Generated plan was empty. Try again.");
       }
     } catch (error) {
@@ -93,6 +99,7 @@ const MyPlan = () => {
       <WorkoutPlanSection
         loading={planLoading}
         error={planError}
+        banner={planBanner}
         plan={plan}
         generating={planGenerating}
         onGeneratePlan={handleGeneratePlan}
