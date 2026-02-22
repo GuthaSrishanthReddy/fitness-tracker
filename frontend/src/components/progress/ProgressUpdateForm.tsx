@@ -141,16 +141,16 @@ export default function ProgressUpdateForm({
       const payload: ProgressInput = {
         ...emptyProgress,
         weight: Number(form.weight),
-        bodyFat: Number(form.bodyFat),
+        bodyFat: toNumberOrUndefined(form.bodyFat),
         muscleMass: toNumberOrUndefined(form.muscleMass),
         waistCircumference: toNumberOrUndefined(form.waistCircumference),
-        systolicBP: Number(form.systolicBP),
-        diastolicBP: Number(form.diastolicBP),
-        restingHeartRate: Number(form.restingHeartRate),
+        systolicBP: toNumberOrUndefined(form.systolicBP),
+        diastolicBP: toNumberOrUndefined(form.diastolicBP),
+        restingHeartRate: toNumberOrUndefined(form.restingHeartRate),
         fastingSugar: toNumberOrUndefined(form.fastingSugar),
         postPrandialSugar: toNumberOrUndefined(form.postPrandialSugar),
         hba1c: toNumberOrUndefined(form.hba1c),
-        creatinine: Number(form.creatinine),
+        creatinine: toNumberOrUndefined(form.creatinine),
         urea: toNumberOrUndefined(form.urea),
         uricAcid: toNumberOrUndefined(form.uricAcid),
         totalCholesterol: toNumberOrUndefined(form.totalCholesterol),
@@ -159,11 +159,11 @@ export default function ProgressUpdateForm({
         triglycerides: toNumberOrUndefined(form.triglycerides),
         proteinIntake: toNumberOrUndefined(form.proteinIntake),
         creatineIntake: toNumberOrUndefined(form.creatineIntake),
-        workoutFrequency: Number(form.workoutFrequency),
-        workoutDuration: Number(form.workoutDuration),
-        cardioMinutes: Number(form.cardioMinutes),
-        sleepHours: Number(form.sleepHours),
-        stressLevel: Number(form.stressLevel),
+        workoutFrequency: toNumberOrUndefined(form.workoutFrequency),
+        workoutDuration: toNumberOrUndefined(form.workoutDuration),
+        cardioMinutes: toNumberOrUndefined(form.cardioMinutes),
+        sleepHours: toNumberOrUndefined(form.sleepHours),
+        stressLevel: toNumberOrUndefined(form.stressLevel) ?? 1,
         notes: form.notes.trim() ? form.notes.trim() : undefined,
       };
 
@@ -218,7 +218,6 @@ export default function ProgressUpdateForm({
               type="number"
               value={form.bodyFat}
               onChange={(e) => handleChange("bodyFat", e.target.value)}
-              required
               min={2}
               max={70}
             />
@@ -249,7 +248,6 @@ export default function ProgressUpdateForm({
               type="number"
               value={form.systolicBP}
               onChange={(e) => handleChange("systolicBP", e.target.value)}
-              required
               min={70}
               max={250}
             />
@@ -260,7 +258,6 @@ export default function ProgressUpdateForm({
               type="number"
               value={form.diastolicBP}
               onChange={(e) => handleChange("diastolicBP", e.target.value)}
-              required
               min={40}
               max={150}
             />
@@ -271,7 +268,6 @@ export default function ProgressUpdateForm({
               type="number"
               value={form.restingHeartRate}
               onChange={(e) => handleChange("restingHeartRate", e.target.value)}
-              required
               min={30}
               max={200}
             />
@@ -313,7 +309,6 @@ export default function ProgressUpdateForm({
               type="number"
               value={form.creatinine}
               onChange={(e) => handleChange("creatinine", e.target.value)}
-              required
               min={0.2}
               max={20}
               step="0.01"
@@ -406,7 +401,6 @@ export default function ProgressUpdateForm({
               type="number"
               value={form.workoutFrequency}
               onChange={(e) => handleChange("workoutFrequency", e.target.value)}
-              required
               min={0}
               max={14}
             />
@@ -417,7 +411,6 @@ export default function ProgressUpdateForm({
               type="number"
               value={form.workoutDuration}
               onChange={(e) => handleChange("workoutDuration", e.target.value)}
-              required
               min={0}
               max={300}
             />
@@ -428,7 +421,6 @@ export default function ProgressUpdateForm({
               type="number"
               value={form.cardioMinutes}
               onChange={(e) => handleChange("cardioMinutes", e.target.value)}
-              required
               min={0}
               max={1000}
             />
@@ -439,7 +431,6 @@ export default function ProgressUpdateForm({
               type="number"
               value={form.sleepHours}
               onChange={(e) => handleChange("sleepHours", e.target.value)}
-              required
               min={0}
               max={24}
               step="0.1"
@@ -451,7 +442,6 @@ export default function ProgressUpdateForm({
               type="number"
               value={form.stressLevel}
               onChange={(e) => handleChange("stressLevel", e.target.value)}
-              required
               min={1}
               max={5}
             />

@@ -1,15 +1,15 @@
 export interface ProgressInput {
   weight: number;
-  bodyFat: number;
+  bodyFat?: number;
   muscleMass?: number;
   waistCircumference?: number;
-  systolicBP: number;
-  diastolicBP: number;
-  restingHeartRate: number;
+  systolicBP?: number;
+  diastolicBP?: number;
+  restingHeartRate?: number;
   fastingSugar?: number;
   postPrandialSugar?: number;
   hba1c?: number;
-  creatinine: number;
+  creatinine?: number;
   urea?: number;
   uricAcid?: number;
   totalCholesterol?: number;
@@ -18,11 +18,11 @@ export interface ProgressInput {
   triglycerides?: number;
   proteinIntake?: number;
   creatineIntake?: number;
-  workoutFrequency: number;
-  workoutDuration: number;
-  cardioMinutes: number;
-  sleepHours: number;
-  stressLevel: number;
+  workoutFrequency?: number;
+  workoutDuration?: number;
+  cardioMinutes?: number;
+  sleepHours?: number;
+  stressLevel?: number;
   notes?: string;
 }
 
