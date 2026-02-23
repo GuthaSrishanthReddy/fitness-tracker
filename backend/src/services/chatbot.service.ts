@@ -2,7 +2,10 @@ import crypto from "crypto";
 import { prisma } from "../config/db";
 import { createEmbedding } from "./embedding.service";
 import { model } from "./model.service";
-import { embeddingStoreService } from "./embeddingStore.service";
+import { staticKnowledgeService } from "./staticKnowledge.service";
+
+const TOP_K = 5;
+const MAX_CONTEXT_CHARS = 2000;
 
 const normalizeAiError = (error: any) => {
   const status = error?.status ?? error?.statusCode;
@@ -68,10 +71,23 @@ export const chatbotService = {
       return "Please enter a message.";
     }
 
-    const source = buildSource(sessionId);
-    const userContent = `User: ${normalized}`;
+    await staticKnowledgeService.ensureSeeded();
 
-    const userEmbedding = await createEmbeddingSafe(userContent);
+    const source = buildSource(sessionId);
+    const userEmbedding = await createEmbeddingSafe(normalized);
+    const contextRows = await prisma.$queryRaw<
+      { content: string }[]
+    >`
+      SELECT content
+      FROM "DocumentEmbedding"
+      WHERE "userId" = ${userId} OR "userId" = 'system'
+      ORDER BY embedding <-> ${userEmbedding}::vector
+      LIMIT ${TOP_K}
+    `;
+    const retrievedContext = contextRows.map((row) => row.content).join("\n");
+    const limitedContext = retrievedContext.slice(0, MAX_CONTEXT_CHARS);
+
+    const userContent = `User: ${normalized}`;
 
     await prisma.$executeRaw`
       INSERT INTO "DocumentEmbedding"
@@ -80,45 +96,22 @@ export const chatbotService = {
         (${crypto.randomUUID()}, ${userId}, ${source}, ${userContent}, ${userEmbedding}::vector)
     `;
 
-    const [historyRows, dietRows, routineRows] = await Promise.all([
-      embeddingStoreService.getBySource(userId, source, "asc"),
-      embeddingStoreService.getBySource(userId, "diet", "asc"),
-      embeddingStoreService.getBySource(userId, "routine", "asc"),
-    ]);
-
-    const history = historyRows.map((row) => row.content).join("\n");
-    const dietHistory = dietRows.map((row) => row.content).join("\n");
-    const routineHistory = routineRows.map((row) => row.content).join("\n");
-
     const prompt = `
 You are a helpful fitness and nutrition assistant.
-Use the chat history to answer the latest user message.
+Use only the retrieved context when relevant.
+If context is insufficient, say so briefly and give a safe general answer.
 
-User details:
-Diet history:
-${dietHistory || "none"}
+Retrieved context:
+${limitedContext || "none"}
 
-Routine history:
-${routineHistory || "none"}
+User message:
+${normalized}
 
-Chat history (oldest first):
-${history}
-
-Respond to the last user message clearly and concisely.
+Respond clearly and concisely.
 `;
 
     const result = await generateContentSafe(prompt);
     const answer = result.response.text();
-
-    const aiContent = `AI: ${answer}`;
-    const aiEmbedding = await createEmbeddingSafe(aiContent);
-
-    await prisma.$executeRaw`
-      INSERT INTO "DocumentEmbedding"
-        (id, "userId", source, content, embedding)
-      VALUES
-        (${crypto.randomUUID()}, ${userId}, ${source}, ${aiContent}, ${aiEmbedding}::vector)
-    `;
 
     return answer;
   },

@@ -4,6 +4,7 @@ import { model } from "./model.service";
 import { embeddingStoreService } from "./embeddingStore.service";
 import { planTemplate } from "../utils/constants";
 import crypto from "crypto";
+import { retrieveContextBySources } from "./rag.retrieve";
 
 const WEEK_DAYS = [
   "Monday",
@@ -212,25 +213,13 @@ export const aiPlanService = {
   },
 
   async generatePlan(userId: string): Promise<PlanGenerationResult> {
-    const progressHistory = await embeddingStoreService.getBySource(
+    const retrievedContext = await retrieveContextBySources(
       userId,
-      "progress",
-      "desc"
+      "Generate an optimal weekly workout plan from latest progress and routine data.",
+      ["progress", "routine"],
+      8,
+      3500
     );
-
-    const routineHistory = await embeddingStoreService.getBySource(
-      userId,
-      "routine",
-      "desc"
-    );
-
-    const historyText = progressHistory.map((row) => row.content).join("\n");
-    const routineText = routineHistory.map((row) => row.content).join("\n");
-    const truncate = (text: string, max: number) =>
-      text.length > max ? `${text.slice(0, max)}\n...` : text;
-
-    const limitedHistory = truncate(historyText, 3500);
-    const limitedRoutine = truncate(routineText, 1500);
 
 
     const prompt = `
@@ -274,10 +263,7 @@ PROGRAM DESIGN REQUIREMENTS:
    - Professional programming standards (no random exercise selection).
 
 Progress history:
-${limitedHistory}
-
-Routine history:
-${limitedRoutine}
+${retrievedContext || "none"}
 
 Generate the most optimal structured workout plan possible based on the above information and the user's weekly training frequency.
 `;

@@ -3,6 +3,7 @@ import { createEmbedding } from "./embedding.service";
 import { model } from "./model.service";
 import { embeddingStoreService } from "./embeddingStore.service";
 import crypto from "crypto";
+import { retrieveContextBySources } from "./rag.retrieve";
 
 export const aiDietService = {
   parseDietItems(raw: string) {
@@ -81,25 +82,13 @@ export const aiDietService = {
   },
 
   async generateDiet(userId: string) {
-    const progressHistory = await embeddingStoreService.getBySource(
+    const retrievedContext = await retrieveContextBySources(
       userId,
-      "progress",
-      "desc"
+      "Generate a concise nutrition plan from progress and routine data.",
+      ["progress", "routine"],
+      8,
+      3000
     );
-
-    const routineHistory = await embeddingStoreService.getBySource(
-      userId,
-      "routine",
-      "desc"
-    );
-
-    const historyText = progressHistory.map((row) => row.content).join("\n");
-    const routineText = routineHistory.map((row) => row.content).join("\n");
-    const truncate = (text: string, max: number) =>
-      text.length > max ? `${text.slice(0, max)}\n...` : text;
-
-    const limitedHistory = truncate(historyText, 3500);
-    const limitedRoutine = truncate(routineText, 1500);
 
     const prompt = `
 You are a helpful fitness nutrition assistant.
@@ -110,11 +99,8 @@ Return ONLY valid JSON in this exact shape:
   { "meal": "Breakfast", "items": "Oats, eggs, banana", "notes": "High protein" }
 ]
 
-Progress history:
-${limitedHistory}
-
-Routine history:
-${limitedRoutine}
+Retrieved user context:
+${retrievedContext || "none"}
 Generate a meal plan based on the above information.`;
 
     const result = await model.generateContent(prompt);
