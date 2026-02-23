@@ -8,6 +8,7 @@ export type PlanWorkout = {
 
 export type PlanItem = {
   day: string;
+  focus?: string;
   workouts: PlanWorkout[];
 };
 export type GeneratePlanResponse = {

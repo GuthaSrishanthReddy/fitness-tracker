@@ -24,6 +24,7 @@ type PlanWorkout = {
 
 type PlanItem = {
   day: WeekDay;
+  focus: string;
   workouts: PlanWorkout[];
 };
 export type PlanGenerationResult = {
@@ -52,18 +53,23 @@ const generatePlanContent = async (prompt: string) => {
 const groupPlanByDay = (
   flatItems: Array<{
     day: WeekDay;
+    focus: string;
     workoutName: string;
     setsReps: string;
     notes: string;
   }>
 ): PlanItem[] => {
-  const grouped = new Map<WeekDay, PlanWorkout[]>();
+  const grouped = new Map<WeekDay, { focus: string; workouts: PlanWorkout[] }>();
 
   for (const item of flatItems) {
     if (!grouped.has(item.day)) {
-      grouped.set(item.day, []);
+      grouped.set(item.day, { focus: item.focus, workouts: [] });
     }
-    grouped.get(item.day)!.push({
+    const existing = grouped.get(item.day)!;
+    if (!existing.focus && item.focus) {
+      existing.focus = item.focus;
+    }
+    existing.workouts.push({
       workoutName: item.workoutName,
       setsReps: item.setsReps,
       notes: item.notes,
@@ -72,7 +78,8 @@ const groupPlanByDay = (
 
   return WEEK_DAYS.filter((day) => grouped.has(day)).map((day) => ({
     day,
-    workouts: grouped.get(day)!,
+    focus: grouped.get(day)!.focus || "General",
+    workouts: grouped.get(day)!.workouts,
   }));
 };
 
@@ -116,6 +123,7 @@ export const aiPlanService = {
     const jsonText = extractJson(raw);
     let planItems: Array<{
       day?: string;
+      focus?: string;
       workouts?: Array<{
         workoutName?: string;
         workout?: string;
@@ -146,6 +154,7 @@ export const aiPlanService = {
         const cleaned = normalize(raw);
         const items: Array<{
           day?: string;
+          focus?: string;
           workoutName: string;
           setsReps: string;
           notes: string;
@@ -167,10 +176,12 @@ export const aiPlanService = {
 
     const normalizedFlat = planItems.flatMap((item, idx) => {
       const day = normalizeDay(item.day, idx);
+      const focus = String(item.focus ?? "").trim();
 
       if (Array.isArray(item.workouts)) {
         return item.workouts.map((workout) => ({
           day,
+          focus,
           workoutName: String(workout.workoutName ?? workout.workout ?? "").trim(),
           setsReps: String(workout.setsReps ?? workout.sets ?? "").trim(),
           notes: String(workout.notes ?? "").trim(),
@@ -180,6 +191,7 @@ export const aiPlanService = {
       return [
         {
           day,
+          focus,
           workoutName: String(item.workoutName ?? item.workout ?? "").trim(),
           setsReps: String(item.setsReps ?? item.sets ?? "").trim(),
           notes: String(item.notes ?? "").trim(),
@@ -222,22 +234,53 @@ export const aiPlanService = {
 
 
     const prompt = `
-You are a helpful fitness assistant.
-Use the user's progress history and routine history to generate a concise workout plan.
+You are an elite strength & conditioning coach and certified personal trainer.
 
-Return ONLY valid JSON in this exact shape:
+Your task is to generate a structured, professional, evidence-based workout program using the user's progress history and routine history.
+
+CRITICAL OUTPUT RULES:
+- Return ONLY valid JSON.
+- The JSON MUST strictly follow this exact structure:
 ${planTemplate}
+- Do NOT include explanations, markdown, or extra text.
+- Do NOT add fields that are not defined in the template.
+- Use the key name "focus" exactly (all lowercase). Never use "Focus".
+- Ensure proper JSON formatting (no trailing commas, valid quotes).
 
-add the workouts based on the user's progress and routine history, but if the history is not usable, generate a balanced beginner full-body workout plan with 5 items per day. Focus on compound movements and include clear sets/reps and notes for each exercise.
-only use the variations that are optimal, famous.
-Generate the plan based on the workout frequency per week
+PROGRAM DESIGN REQUIREMENTS:
+1. Use the user's progress history and routine history to:
+   - Maintain progressive overload where appropriate.
+   - Avoid repeating ineffective patterns.
+   - Build on demonstrated strengths.
+   - Address potential weak points.
+   -know their workout frequency per week and strictly design the program accordingly
+   -The workout frequency number of days must be assigned with gym workouts and the rest of the days(exceeding workout frequency number of days) of the week should be left empty (no workouts assigned) and focus must be Rest.
+   - Generate a balanced beginner full-body program.
+   - Include exactly 5 exercises per workout day.
+3. Base the program strictly on the user's workout frequency per week.
+4. Prioritize:
+   - Scientifically proven, well-known exercise variations.
+   - Optimal exercise sequencing (compound → secondary → accessory).
+   - Balanced weekly volume per muscle group.
+5. Every exercise must include:
+   - Sets
+   - Reps (or rep range)
+   - Rest time
+   - Clear coaching notes (form cues, intensity guidance, RPE or progression tips).
+6. Ensure:
+   - Logical muscle group splits.
+   - Proper recovery between sessions.
+   - Realistic weekly training volume.
+   - Professional programming standards (no random exercise selection).
 
 Progress history:
 ${limitedHistory}
 
 Routine history:
 ${limitedRoutine}
-Generate a workout plan based on the above information.`;
+
+Generate the most optimal structured workout plan possible based on the above information and the user's weekly training frequency.
+`;
 
     let planItems: PlanItem[] = [];
     let latestRaw = "";
@@ -259,13 +302,14 @@ Return ONLY valid JSON (no code fences, no extra text) in this exact shape:
 [
   {
     "day": "Monday",
+    "focus": "Full Body",
     "workouts": [
       { "workoutName": "Squats", "setsReps": "2 x 12", "notes": "Light weight, focus on form" }
     ]
   }
 ]
 
-If you cannot use the history, return a generic beginner full-body plan with 5 items and include day for each item. use all the details you can use .
+If you cannot use the history, return a generic beginner full-body plan with 5 items and include day and focus for each item. Use the key name "focus" exactly (all lowercase), never "Focus".
 `;
       try {
         const retry = await generatePlanContent(retryPrompt);
@@ -287,6 +331,7 @@ Required output schema:
 [
   {
     "day": "Monday",
+    "focus": "Full Body",
     "workouts": [
       { "workoutName": "Squats", "setsReps": "2 x 12", "notes": "Light weight, focus on form" }
     ]
@@ -296,6 +341,7 @@ Required output schema:
 Rules:
 - Output only JSON array.
 - Use one item per workout day.
+- Use the key name "focus" exactly (all lowercase), never "Focus".
 - Keep original meaning, do not invent medical claims.
 - Ensure each workout's "workoutName" is never empty.
 
@@ -362,7 +408,6 @@ ${latestRaw}
 
     console.log("Generated plan items:", planItems);
     const planText = JSON.stringify(planItems);
-    const planEmbedding = await createEmbedding(planText);
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -430,12 +475,20 @@ ${latestRaw}
       },
     });
 
-    await prisma.$executeRaw`
-      INSERT INTO "DocumentEmbedding"
-        (id, "userId", source, content, embedding)
-      VALUES
-        (${crypto.randomUUID()}, ${userId}, 'plan', ${planText}, ${planEmbedding}::vector)
-    `;
+    const hasPlanEmbedding = await embeddingStoreService.hasExactContent(
+      userId,
+      "plan",
+      planText
+    );
+    if (!hasPlanEmbedding) {
+      const planEmbedding = await createEmbedding(planText);
+      await prisma.$executeRaw`
+        INSERT INTO "DocumentEmbedding"
+          (id, "userId", source, content, embedding)
+        VALUES
+          (${crypto.randomUUID()}, ${userId}, 'plan', ${planText}, ${planEmbedding}::vector)
+      `;
+    }
 
     return {
       plan: planItems,

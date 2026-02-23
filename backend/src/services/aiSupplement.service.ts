@@ -146,14 +146,20 @@ If you are not confident any supplements are needed, return [].
     }
 
     const supplementText = JSON.stringify(items);
-    const supplementEmbedding = await createEmbedding(supplementText);
-
-    await prisma.$executeRaw`
-      INSERT INTO "DocumentEmbedding"
-        (id, "userId", source, content, embedding)
-      VALUES
-        (${crypto.randomUUID()}, ${userId}, 'supplement', ${supplementText}, ${supplementEmbedding}::vector)
-    `;
+    const hasSupplementEmbedding = await embeddingStoreService.hasExactContent(
+      userId,
+      "supplement",
+      supplementText
+    );
+    if (!hasSupplementEmbedding) {
+      const supplementEmbedding = await createEmbedding(supplementText);
+      await prisma.$executeRaw`
+        INSERT INTO "DocumentEmbedding"
+          (id, "userId", source, content, embedding)
+        VALUES
+          (${crypto.randomUUID()}, ${userId}, 'supplement', ${supplementText}, ${supplementEmbedding}::vector)
+      `;
+    }
 
     return items;
   },

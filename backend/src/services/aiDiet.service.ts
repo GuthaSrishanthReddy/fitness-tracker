@@ -138,14 +138,20 @@ If you cannot use the history, return a generic 1-day meal plan with 4 items.
     }
 
     const dietText = JSON.stringify(dietItems);
-    const dietEmbedding = await createEmbedding(dietText);
-
-    await prisma.$executeRaw`
-      INSERT INTO "DocumentEmbedding"
-        (id, "userId", source, content, embedding)
-      VALUES
-        (${crypto.randomUUID()}, ${userId}, 'diet', ${dietText}, ${dietEmbedding}::vector)
-    `;
+    const hasDietEmbedding = await embeddingStoreService.hasExactContent(
+      userId,
+      "diet",
+      dietText
+    );
+    if (!hasDietEmbedding) {
+      const dietEmbedding = await createEmbedding(dietText);
+      await prisma.$executeRaw`
+        INSERT INTO "DocumentEmbedding"
+          (id, "userId", source, content, embedding)
+        VALUES
+          (${crypto.randomUUID()}, ${userId}, 'diet', ${dietText}, ${dietEmbedding}::vector)
+      `;
+    }
 
     return dietItems;
   },

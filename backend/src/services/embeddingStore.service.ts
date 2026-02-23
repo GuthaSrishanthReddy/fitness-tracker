@@ -11,6 +11,18 @@ export type EmbeddingSource =
 type SortOrder = "asc" | "desc";
 
 export const embeddingStoreService = {
+  async hasExactContent(
+    userId: string,
+    source: EmbeddingSource,
+    content: string
+  ) {
+    const existing = await prisma.documentEmbedding.findFirst({
+      where: { userId, source, content },
+      select: { id: true },
+    });
+    return Boolean(existing);
+  },
+
   async getAllEmbeddings(userId: string, order: SortOrder = "desc") {
     return prisma.documentEmbedding.findMany({
       where: { userId },

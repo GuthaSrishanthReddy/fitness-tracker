@@ -1,5 +1,6 @@
 import { prisma } from "../config/db";
 import { createEmbedding } from "./embedding.service";
+import { embeddingStoreService } from "./embeddingStore.service";
 import crypto from "crypto";
 
 export const progressService = {
@@ -90,14 +91,20 @@ Stress Level: ${progress.stressLevel}
 Notes: ${progress.notes ?? "None"}
 `;
 
-    const embedding = await createEmbedding(text);
-
-    await prisma.$executeRaw`
-      INSERT INTO "DocumentEmbedding"
-        (id, "userId", source, content, embedding)
-      VALUES
-        (${crypto.randomUUID()}, ${userId}, 'progress', ${text}, ${embedding}::vector)
-    `;
+    const hasProgressEmbedding = await embeddingStoreService.hasExactContent(
+      userId,
+      "progress",
+      text
+    );
+    if (!hasProgressEmbedding) {
+      const embedding = await createEmbedding(text);
+      await prisma.$executeRaw`
+        INSERT INTO "DocumentEmbedding"
+          (id, "userId", source, content, embedding)
+        VALUES
+          (${crypto.randomUUID()}, ${userId}, 'progress', ${text}, ${embedding}::vector)
+      `;
+    }
 
     return progress;
   },

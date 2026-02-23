@@ -108,7 +108,7 @@ const WorkoutPlanSection = ({
                               {dayPlan.day}
                             </button>
                           </td>
-                          <td>{workoutText}</td>
+                          <td>{dayPlan.focus || "General"}</td>
                         </tr>
                         {isActive && (
                           <tr className="workout-row-detail">
