@@ -1,8 +1,8 @@
 import { api } from "./api";
-import type { RagResponse } from "../types/rag.types";
+import type { RagApiResponse } from "../types/rag.types";
 
 export const askRag = (message: string) =>
-  api<RagResponse>("/ai/chat", {
+  api<RagApiResponse>("/ai/chat", {
     method: "POST",
     body: JSON.stringify({ message }),
-  });
+  }).then((data) => (typeof data === "string" ? data : data.answer));

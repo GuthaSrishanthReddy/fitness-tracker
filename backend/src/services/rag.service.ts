@@ -1,28 +1,59 @@
+import { prisma } from "../config/db";
 import { model } from "./model.service";
 import { retrieveContext } from "./rag.retrieve";
 
 const responseCache = new Map<string, string>();
 
-export const ragService = {
-  async chat(userId: string,message: string) {
-    const cacheKey = `${userId}:${message.trim().toLowerCase()}`;
+const formatRecentProgress = async (userId: string): Promise<string> => {
+  const rows = await prisma.progress.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    take: 8,
+    select: {
+      createdAt: true,
+      weight: true,
+      bodyFat: true,
+      waistCircumference: true,
+    },
+  });
 
-    // 1️⃣ Cache check
+  if (rows.length === 0) return "";
+
+  const lines = rows.map((row) => {
+    const date = row.createdAt.toISOString().slice(0, 10);
+    return `Date: ${date}, Weight: ${row.weight} kg, Body Fat: ${row.bodyFat}%, Waist: ${row.waistCircumference ?? "N/A"} cm`;
+  });
+
+  return `Recent progress history (latest first):\n${lines.join("\n")}`;
+};
+
+export const ragService = {
+  async chat(userId: string, message: string) {
+    const latestProgress = await prisma.progress.findFirst({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      select: { createdAt: true },
+    });
+    const progressVersion = latestProgress?.createdAt.toISOString() ?? "none";
+    const cacheKey = `${userId}:${message.trim().toLowerCase()}:${progressVersion}`;
+
     if (responseCache.has(cacheKey)) {
-      console.log("⚡ Cache hit");
       return responseCache.get(cacheKey)!;
     }
 
-    console.log("🧠 Cache miss — running RAG");
+    const retrievedContext = await retrieveContext(userId, message);
+    const recentProgress = await formatRecentProgress(userId);
 
-    // 2️⃣ Retrieve context (IMPORTANT: await)
-    const context = await retrieveContext(userId, message) || "No History available";
+    const context =
+      [retrievedContext, recentProgress]
+        .filter((part) => part && part.trim().length > 0)
+        .join("\n\n") || "No history available";
 
-    // 3️⃣ Build Gemini prompt (plain text)
     const prompt = `
 You are a helpful fitness and nutrition assistant.
-Answer ONLY using the context below.
-If the context is insufficient, say "Not enough data".
+Use the context below as primary evidence.
+If the question asks about trend/progress, compare multiple dated entries instead of only the latest value.
+If data is still missing, state that clearly and then provide a safe general recommendation.
 
 Context:
 ${context}
@@ -31,11 +62,16 @@ Question:
 ${message}
 `;
 
-    // 4️⃣ Call Gemini
-    const result = await model.generateContent(prompt);
+    const result = await model.generateContent({
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      generationConfig: {
+        maxOutputTokens: 1000,
+        temperature: 0.3,
+        topP: 0.9,
+      },
+    } as any);
     const answer = result.response.text();
 
-    // 5️⃣ Cache result
     responseCache.set(cacheKey, answer);
 
     return answer;

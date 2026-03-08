@@ -75,12 +75,14 @@ export const chatbotService = {
 
     const source = buildSource(sessionId);
     const userEmbedding = await createEmbeddingSafe(normalized);
+    const embeddingDims = userEmbedding.length;
     const contextRows = await prisma.$queryRaw<
       { content: string }[]
     >`
       SELECT content
       FROM "DocumentEmbedding"
-      WHERE "userId" = ${userId} OR "userId" = 'system'
+      WHERE ("userId" = ${userId} OR "userId" = 'system')
+        AND vector_dims(embedding) = ${embeddingDims}
       ORDER BY embedding <-> ${userEmbedding}::vector
       LIMIT ${TOP_K}
     `;

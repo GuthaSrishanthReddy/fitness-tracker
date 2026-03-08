@@ -42,13 +42,69 @@ const normalizeDay = (value: unknown, index: number): WeekDay => {
   return matched ?? fallback;
 };
 
+const isTokenLimitError = (error: unknown): boolean => {
+  const message =
+    error && typeof error === "object" && "message" in (error as any)
+      ? String((error as any).message).toLowerCase()
+      : "";
+
+  return (
+    message.includes("token") &&
+    (message.includes("limit") ||
+      message.includes("exceed") ||
+      message.includes("too many") ||
+      message.includes("context"))
+  );
+};
+
+const isRateLimitError = (error: unknown): boolean => {
+  const message =
+    error && typeof error === "object" && "message" in (error as any)
+      ? String((error as any).message).toLowerCase()
+      : "";
+
+  return (
+    message.includes("rate limit") ||
+    message.includes("quota") ||
+    message.includes("too many requests") ||
+    message.includes("429")
+  );
+};
+
+const isTimeoutError = (error: unknown): boolean => {
+  const message =
+    error && typeof error === "object" && "message" in (error as any)
+      ? String((error as any).message).toLowerCase()
+      : "";
+  return message.includes("timed out") || message.includes("timeout");
+};
+
+const summarizeError = (error: unknown): string => {
+  const message =
+    error && typeof error === "object" && "message" in (error as any)
+      ? String((error as any).message).trim()
+      : "";
+  if (!message) return "";
+  return message.length > 120 ? `${message.slice(0, 117)}...` : message;
+};
+
 const generatePlanContent = async (prompt: string) => {
-  return model.generateContent({
+  const timeoutMs = 25000;
+  const response = model.generateContent({
     contents: [{ role: "user", parts: [{ text: prompt }] }],
     generationConfig: {
       responseMimeType: "application/json",
+      temperature: 0.2,
+      maxOutputTokens: 900,
     },
   } as any);
+
+  return Promise.race([
+    response,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("Plan generation timed out")), timeoutMs)
+    ),
+  ]);
 };
 
 const groupPlanByDay = (
@@ -217,135 +273,82 @@ export const aiPlanService = {
       userId,
       "Generate an optimal weekly workout plan from latest progress and routine data.",
       ["progress", "routine"],
-      8,
-      3500
+      4,
+      1800
     );
 
 
     const prompt = `
-You are an elite strength & conditioning coach and certified personal trainer.
-
-Your task is to generate a structured, professional, evidence-based workout program using the user's progress history and routine history.
-
-CRITICAL OUTPUT RULES:
-- Return ONLY valid JSON.
-- The JSON MUST strictly follow this exact structure:
+Return ONLY valid JSON in this exact schema:
 ${planTemplate}
-- Do NOT include explanations, markdown, or extra text.
-- Do NOT add fields that are not defined in the template.
-- Use the key name "focus" exactly (all lowercase). Never use "Focus".
-- Ensure proper JSON formatting (no trailing commas, valid quotes).
 
-PROGRAM DESIGN REQUIREMENTS:
-1. Use the user's progress history and routine history to:
-   - Maintain progressive overload where appropriate.
-   - Avoid repeating ineffective patterns.
-   - Build on demonstrated strengths.
-   - Address potential weak points.
-   -know their workout frequency per week and strictly design the program accordingly
-   -The workout frequency number of days must be assigned with gym workouts and the rest of the days(exceeding workout frequency number of days) of the week should be left empty (no workouts assigned) and focus must be Rest.
-   - Generate a balanced beginner full-body program.
-   - Include exactly 5 exercises per workout day.
-3. Base the program strictly on the user's workout frequency per week.
-4. Prioritize:
-   - Scientifically proven, well-known exercise variations.
-   - Optimal exercise sequencing (compound → secondary → accessory).
-   - Balanced weekly volume per muscle group.
-5. Every exercise must include:
-   - Sets
-   - Reps (or rep range)
-   - Rest time
-   - Clear coaching notes (form cues, intensity guidance, RPE or progression tips).
-6. Ensure:
-   - Logical muscle group splits.
-   - Proper recovery between sessions.
-   - Realistic weekly training volume.
-   - Professional programming standards (no random exercise selection).
+Rules:
+- Use key "focus" (lowercase).
+- Read "workoutFrequency" and "workoutDuration" from user context.
+- Training days in the week must equal workoutFrequency (cap to 1-7).
+- Remaining days must be { "focus": "Rest", "workouts": [] }.
+- Match session size to workoutDuration: <=45 min: 4 workouts, 46-70 min: 5 workouts, >70 min: 6 workouts.
+- Keep exercise choice aligned with user goal and level from context.
+- If context is missing, return a safe beginner 3-day full-body plan + rest days.
 
-Progress history:
+User context:
 ${retrievedContext || "none"}
-
-Generate the most optimal structured workout plan possible based on the above information and the user's weekly training frequency.
 `;
 
     let planItems: PlanItem[] = [];
-    let latestRaw = "";
     let modelFailure: unknown;
+    let tokenLimitExceeded = false;
+    let rateLimitExceeded = false;
+    let timeoutExceeded = false;
     try {
       const result = await generatePlanContent(prompt);
       const raw = result.response.text().trim();
-      latestRaw = raw;
       console.log("RAW_PLAN_RESPONSE:", raw);
       planItems = aiPlanService.parsePlanItems(raw);
     } catch (error) {
       modelFailure = error;
+      tokenLimitExceeded = isTokenLimitError(error);
+      rateLimitExceeded = isRateLimitError(error);
+      timeoutExceeded = isTimeoutError(error);
       console.error("Plan generation model call failed", error);
     }
 
     if (planItems.length === 0) {
       const retryPrompt = `
-Return ONLY valid JSON (no code fences, no extra text) in this exact shape:
-[
-  {
-    "day": "Monday",
-    "focus": "Full Body",
-    "workouts": [
-      { "workoutName": "Squats", "setsReps": "2 x 12", "notes": "Light weight, focus on form" }
-    ]
-  }
-]
+Return ONLY valid JSON, no markdown, no extra text.
+Schema:
+${planTemplate}
 
-If you cannot use the history, return a generic beginner full-body plan with 5 items and include day and focus for each item. Use the key name "focus" exactly (all lowercase), never "Focus".
+Strict rules:
+- Use "focus" (lowercase).
+- Use workoutFrequency and workoutDuration from context if available.
+- Fill non-training days as Rest with empty workouts.
+- If context is missing, return a beginner 3-day full-body plan + rest days.
 `;
       try {
         const retry = await generatePlanContent(retryPrompt);
         const retryRaw = retry.response.text().trim();
-        latestRaw = retryRaw;
         console.log("RAW_PLAN_RESPONSE_RETRY:", retryRaw);
         planItems = aiPlanService.parsePlanItems(retryRaw);
       } catch (error) {
         modelFailure = error;
+        tokenLimitExceeded = tokenLimitExceeded || isTokenLimitError(error);
+        rateLimitExceeded = rateLimitExceeded || isRateLimitError(error);
+        timeoutExceeded = timeoutExceeded || isTimeoutError(error);
         console.error("Plan generation retry failed", error);
       }
     }
-
-    if (planItems.length === 0 && latestRaw) {
-      const repairPrompt = `
-Convert this workout-plan response into strict valid JSON only.
-
-Required output schema:
-[
-  {
-    "day": "Monday",
-    "focus": "Full Body",
-    "workouts": [
-      { "workoutName": "Squats", "setsReps": "2 x 12", "notes": "Light weight, focus on form" }
-    ]
-  }
-]
-
-Rules:
-- Output only JSON array.
-- Use one item per workout day.
-- Use the key name "focus" exactly (all lowercase), never "Focus".
-- Keep original meaning, do not invent medical claims.
-- Ensure each workout's "workoutName" is never empty.
-
-Input to convert:
-${latestRaw}
-`;
-      try {
-        const repaired = await generatePlanContent(repairPrompt);
-        const repairedRaw = repaired.response.text().trim();
-        console.log("RAW_PLAN_RESPONSE_REPAIRED:", repairedRaw);
-        planItems = aiPlanService.parsePlanItems(repairedRaw);
-      } catch (error) {
-        modelFailure = error;
-        console.error("Plan generation repair failed", error);
-      }
-    }
-
     if (planItems.length === 0) {
+      const failureBanner = rateLimitExceeded
+        ? "Rate limit exceeded while generating your plan. Please wait and try again."
+        : tokenLimitExceeded
+        ? "Token limit exceeded while generating your plan. Please try again shortly."
+        : timeoutExceeded
+        ? "Plan generation timed out. Please try again."
+        : summarizeError(modelFailure)
+        ? `Plan generation failed: ${summarizeError(modelFailure)}`
+        : "Plan generation failed due to an AI service error. Showing your previous plan.";
+
       // Fallback: if generation failed, return previous available plan without storing anything new.
       const previousPlan = await prisma.plan.findUnique({
         where: { userId },
@@ -360,7 +363,7 @@ ${latestRaw}
         return {
           plan: previousFromPlanTable,
           usedFallback: true,
-          banner: "could not generate a new plan :(",
+          banner: failureBanner,
         };
       }
 
@@ -373,7 +376,7 @@ ${latestRaw}
         return {
           plan: previousFromEmbedding,
           usedFallback: true,
-          banner: "AI generation failed. Showing your last available plan.",
+          banner: failureBanner,
         };
       }
 
@@ -382,13 +385,19 @@ ${latestRaw}
           ? String((modelFailure as any).message)
           : "";
       const err = new Error(
-        details
+        rateLimitExceeded
+          ? "Rate limit exceeded. Please wait and try again."
+          : tokenLimitExceeded
+          ? "Token limit exceeded. Please reduce context size and try again."
+          : timeoutExceeded
+          ? "Plan generation timed out. Please try again."
+          : details
           ? `Failed to generate a valid AI workout plan: ${details}`
           : "Failed to generate a valid AI workout plan"
       ) as Error & {
         statusCode?: number;
       };
-      err.statusCode = 502;
+      err.statusCode = rateLimitExceeded ? 429 : tokenLimitExceeded ? 413 : 502;
       throw err;
     }
 
@@ -461,20 +470,27 @@ ${latestRaw}
       },
     });
 
-    const hasPlanEmbedding = await embeddingStoreService.hasExactContent(
-      userId,
-      "plan",
-      planText
-    );
-    if (!hasPlanEmbedding) {
-      const planEmbedding = await createEmbedding(planText);
-      await prisma.$executeRaw`
-        INSERT INTO "DocumentEmbedding"
-          (id, "userId", source, content, embedding)
-        VALUES
-          (${crypto.randomUUID()}, ${userId}, 'plan', ${planText}, ${planEmbedding}::vector)
-      `;
-    }
+    // Keep response latency low by storing embeddings in the background.
+    void (async () => {
+      try {
+        const hasPlanEmbedding = await embeddingStoreService.hasExactContent(
+          userId,
+          "plan",
+          planText
+        );
+        if (hasPlanEmbedding) return;
+
+        const planEmbedding = await createEmbedding(planText);
+        await prisma.$executeRaw`
+          INSERT INTO "DocumentEmbedding"
+            (id, "userId", source, content, embedding)
+          VALUES
+            (${crypto.randomUUID()}, ${userId}, 'plan', ${planText}, ${planEmbedding}::vector)
+        `;
+      } catch (error) {
+        console.error("Plan embedding background write failed", error);
+      }
+    })();
 
     return {
       plan: planItems,

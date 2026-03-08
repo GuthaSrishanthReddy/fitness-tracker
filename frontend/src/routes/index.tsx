@@ -19,6 +19,7 @@ import ExploreTrainers from "../pages/user/ExploreTrainers";
 import Profile from "../pages/user/Profile";
 import UserDataForm from "../pages/user/UserDataForm";
 import ChatBotWindow from "../components/chatbot/ChatWindow";
+import RagChat from "../pages/user/RagChat";
 
 /* Trainer */
 import MyClients from "../pages/trainer/MyClients";
@@ -77,6 +78,7 @@ const AppRoutes = () => {
         <Route path="explore-trainers" element={<ExploreTrainers />} />
         <Route path="profile" element={<Profile />} />
         <Route path="user-data" element={<UserDataForm />} />
+        <Route path="rag" element={<RagChat />} />
       </Route>
 
       <Route
