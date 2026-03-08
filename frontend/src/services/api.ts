@@ -15,6 +15,13 @@ export async function api<T>(url: string, options?: RequestInit): Promise<T> {
     ...options,
   });
 
+  if (res.status === 401) {
+    localStorage.removeItem("token");
+    window.location.replace("/login");
+    throw new Error("Unauthorized");
+  }
+
+
   if (!res.ok) {
     let message = "API error";
     try {

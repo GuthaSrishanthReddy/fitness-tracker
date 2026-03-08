@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { registerApi } from "../../services/auth.service";
+import { useAuth } from "../../hooks/useAuth";
 
 import "./Signup.css";
 
 const Signup = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -27,12 +29,14 @@ const Signup = () => {
         role,
       });
 
-      // If backend returns token, store it
       if ((res as any)?.token) {
-        localStorage.setItem("token", (res as any).token);
+        login((res as any).token);
       }
 
-      navigate(role === "USER" ? "/user/progress" : "/trainer/clients");
+      const nextRole = (res as any)?.user?.role ?? role;
+      navigate(nextRole === "USER" ? "/user/plan" : "/trainer/dashboard", {
+        replace: true,
+      });
     } catch (err: any) {
       setError(err.message || "Signup failed");
     } finally {

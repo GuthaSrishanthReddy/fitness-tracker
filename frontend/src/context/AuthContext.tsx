@@ -26,7 +26,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     if (token) {
       try {
-        const decoded = jwtDecode<{ id: string; role: Role }>(token);
+        const decoded = jwtDecode<{ id: string; role: Role; exp?: number }>(token);
+        if (!decoded.exp || decoded.exp * 1000 < Date.now()) throw new Error("expired");
+
         setUser({ id: decoded.id, role: decoded.role });
       } catch {
         localStorage.removeItem("token");
@@ -38,9 +40,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const login = (token: string) => {
-    localStorage.setItem("token", token);
-    const decoded = jwtDecode<{ id: string; role: Role }>(token);
-    setUser({ id: decoded.id, role: decoded.role });
+    try {
+      const decoded = jwtDecode<{ id: string; role: Role; exp?: number }>(token);
+      if (!decoded.exp || decoded.exp * 1000 < Date.now()) throw new Error("expired");
+
+      localStorage.setItem("token", token);
+      setUser({ id: decoded.id, role: decoded.role });
+    } catch {
+      localStorage.removeItem("token");
+      setUser(null);
+    }
   };
 
   const logout = () => {
