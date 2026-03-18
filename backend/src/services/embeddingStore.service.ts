@@ -2,7 +2,6 @@ import { prisma } from "../config/db";
 
 export type EmbeddingSource =
   | "progress"
-  | "routine"
   | "diet"
   | "plan"
   | "supplement"

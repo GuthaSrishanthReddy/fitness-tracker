@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import ChatInput from "./ChatInput";
 import ChatMessage from "./ChatMessage";
-import { askChatbot, endChatSession } from "../../services/chatbot.service";
+import { askRag, endRagSession } from "../../services/rag.service";
 import "./ChatWindow.css";
 
 type ChatWindowProps = {
@@ -11,36 +11,39 @@ type ChatWindowProps = {
 
 export default function ChatWindow({ onClose }: ChatWindowProps) {
 
-  const sessionIdRef = useRef<string>(crypto.randomUUID());
-  const endedRef = useRef(false);
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [sessionId] = useState(() => {
+    let id = localStorage.getItem("ragSessionId");
+    if (!id) {
+      id = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      localStorage.setItem("ragSessionId", id);
+    }
+    return id;
+  });
   const [messages, setMessages] = useState<
     { id: string; sender: "user" | "ai"; text: string }[]
   >([
     {
       id: "welcome",
       sender: "ai",
-      text: "Hi! Ask me anything about training or nutrition.",
+      text: "Hi! Ask me anything about your fitness progress, plans, diet, or supplements.",
     },
   ]);
   const endRef = useRef<HTMLDivElement | null>(null);
 
-  const endSession = useCallback(async () => {
-    if (endedRef.current) return;
-    endedRef.current = true;
-    try {
-      await endChatSession(sessionIdRef.current);
-    } catch {
-      // ignore end-session errors
-    }
-  }, []);
-
   const handleClose = useCallback(() => {
-    void endSession();
     onClose?.();
-  }, [onClose, endSession]);
+  }, [onClose]);
+
+  const endSession = useCallback(async () => {
+    try {
+      await endRagSession(sessionId);
+    } catch {
+      // Ignore cleanup errors
+    }
+  }, [sessionId]);
 
   const handleSend = useCallback(async () => {
     const trimmed = input.trim();
@@ -57,7 +60,7 @@ export default function ChatWindow({ onClose }: ChatWindowProps) {
     setIsSending(true);
 
     try {
-      const reply = await askChatbot(sessionIdRef.current, trimmed);
+      const reply = await askRag(trimmed, sessionId);
       setMessages((prev) => [
         ...prev,
         {
@@ -78,7 +81,7 @@ export default function ChatWindow({ onClose }: ChatWindowProps) {
     } finally {
       setIsSending(false);
     }
-  }, [input, isSending]);
+  }, [input, isSending, sessionId]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

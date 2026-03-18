@@ -271,8 +271,8 @@ export const aiPlanService = {
   async generatePlan(userId: string): Promise<PlanGenerationResult> {
     const retrievedContext = await retrieveContextBySources(
       userId,
-      "Generate an optimal weekly workout plan from latest progress and routine data.",
-      ["progress", "routine"],
+      "Generate an optimal weekly workout plan from latest progress and previous plan data.",
+      ["progress", "plan"],
       4,
       1800
     );

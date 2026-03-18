@@ -1,79 +1,164 @@
 import { prisma } from "../config/db";
 import { model } from "./model.service";
-import { retrieveContext } from "./rag.retrieve";
+import { createEmbedding } from "./embedding.service";
+import { Prisma } from "@prisma/client";
+import crypto from "crypto";
 
-const responseCache = new Map<string, string>();
+const buildSource = (sessionId: string) => `rag_session:${sessionId}`;
 
-const formatRecentProgress = async (userId: string): Promise<string> => {
-  const rows = await prisma.progress.findMany({
-    where: { userId },
-    orderBy: { createdAt: "desc" },
-    take: 8,
-    select: {
-      createdAt: true,
-      weight: true,
-      bodyFat: true,
-      waistCircumference: true,
-    },
-  });
-
-  if (rows.length === 0) return "";
-
-  const lines = rows.map((row) => {
-    const date = row.createdAt.toISOString().slice(0, 10);
-    return `Date: ${date}, Weight: ${row.weight} kg, Body Fat: ${row.bodyFat}%, Waist: ${row.waistCircumference ?? "N/A"} cm`;
-  });
-
-  return `Recent progress history (latest first):\n${lines.join("\n")}`;
+type RetrievedResult = {
+  content: string;
+  similarity: number;
+  source: string;
 };
 
-export const ragService = {
-  async chat(userId: string, message: string) {
-    const latestProgress = await prisma.progress.findFirst({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-      select: { createdAt: true },
-    });
-    const progressVersion = latestProgress?.createdAt.toISOString() ?? "none";
-    const cacheKey = `${userId}:${message.trim().toLowerCase()}:${progressVersion}`;
+async function retrieveSimilarEmbeddings(
+  userId: string,
+  queryEmbedding: number[],
+  topK: number = 5
+): Promise<RetrievedResult[]> {
+  const queryDimensions = queryEmbedding.length;
 
-    if (responseCache.has(cacheKey)) {
-      return responseCache.get(cacheKey)!;
+  const results = await prisma.$queryRaw<RetrievedResult[]>`
+    SELECT
+      content,
+      1 - (embedding <=> ${queryEmbedding}::vector) AS similarity,
+      source
+    FROM "DocumentEmbedding"
+    WHERE "userId" = ${userId}
+      AND vector_dims(embedding) = ${queryDimensions}
+      AND source NOT LIKE 'rag_session:%'
+    ORDER BY similarity DESC
+    LIMIT ${topK}
+  `;
+
+  return results;
+}
+
+async function retrieveSessionHistory(
+  userId: string,
+  sessionId: string,
+  limit: number = 5
+): Promise<string> {
+  const source = buildSource(sessionId);
+  const rows = await prisma.$queryRaw<{ content: string }[]>`
+    SELECT content
+    FROM "DocumentEmbedding"
+    WHERE "userId" = ${userId}
+      AND source = ${source}
+    ORDER BY "createdAt" DESC
+    LIMIT ${limit}
+  `;
+
+  return rows
+    .map((row) => row.content)
+    .reverse()
+    .join("\n");
+}
+
+export const ragService = {
+  async chat(userId: string, sessionId: string, message: string) {
+    const normalized = message.trim();
+
+    if (!sessionId) {
+      const err = new Error("Missing sessionId") as Error & {
+        statusCode?: number;
+      };
+      err.statusCode = 400;
+      throw err;
     }
 
-    const retrievedContext = await retrieveContext(userId, message);
-    const recentProgress = await formatRecentProgress(userId);
+    if (!normalized) {
+      return "Please enter a message.";
+    }
 
-    const context =
-      [retrievedContext, recentProgress]
-        .filter((part) => part && part.trim().length > 0)
-        .join("\n\n") || "No history available";
+    const source = buildSource(sessionId);
 
-    const prompt = `
-You are a helpful fitness and nutrition assistant.
-Use the context below as primary evidence.
-If the question asks about trend/progress, compare multiple dated entries instead of only the latest value.
-If data is still missing, state that clearly and then provide a safe general recommendation.
+    try {
+      // Embed user message
+      const userEmbedding = await createEmbedding(normalized);
+      const userContent = `User: ${normalized}`;
+      
+      // Store user message in session
+      await prisma.$executeRaw`
+        INSERT INTO "DocumentEmbedding"
+          (id, "userId", source, content, embedding)
+        VALUES
+          (${crypto.randomUUID()}, ${userId}, ${source}, ${userContent}, ${userEmbedding}::vector)
+      `;
 
-Context:
-${context}
+      // Retrieve relevant embeddings using RAG similarity search
+      const ragResults = await retrieveSimilarEmbeddings(userId, userEmbedding, 5);
+      
+      // Filter results with reasonable similarity
+      const relevantResults = ragResults.filter((r) => r.similarity >= 0.60);
 
-Question:
-${message}
+      // Get session history for conversational context
+      const sessionHistory = await retrieveSessionHistory(userId, sessionId, 5);
+
+      // Build context from RAG results
+      const ragContext = relevantResults.length > 0
+        ? relevantResults
+            .map((r) => r.content)
+            .join("\n")
+        : "No relevant historical data found.";
+
+      const prompt = `
+You are a helpful fitness and nutrition assistant. Use the retrieved data below to answer the user's question.
+
+Retrieved Data (from user's fitness history):
+${ragContext}
+
+Conversation History:
+${sessionHistory || "(First message in this conversation)"}
+
+User Question:
+${normalized}
+
+Provide a helpful, specific response based on the retrieved data. If the data is insufficient, acknowledge it and provide safe general guidance.
 `;
 
-    const result = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: {
-        maxOutputTokens: 1000,
-        temperature: 0.3,
-        topP: 0.9,
-      },
-    } as any);
-    const answer = result.response.text();
+      // Call GenAI with RAG context
+      const result = await model.generateContent({
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: {
+          maxOutputTokens: 1000,
+          temperature: 0.3,
+          topP: 0.9,
+        },
+      } as any);
 
-    responseCache.set(cacheKey, answer);
+      const answer = result.response.text();
 
-    return answer;
+      // Store assistant response in session
+      const assistantContent = `Assistant: ${answer}`;
+      const assistantEmbedding = await createEmbedding(answer);
+      await prisma.$executeRaw`
+        INSERT INTO "DocumentEmbedding"
+          (id, "userId", source, content, embedding)
+        VALUES
+          (${crypto.randomUUID()}, ${userId}, ${source}, ${assistantContent}, ${assistantEmbedding}::vector)
+      `;
+
+      return answer;
+    } catch (error) {
+      console.error("RAG chat error:", error);
+      throw error;
+    }
+  },
+
+  async endSession(userId: string, sessionId: string) {
+    if (!sessionId) {
+      const err = new Error("Missing sessionId") as Error & {
+        statusCode?: number;
+      };
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const source = buildSource(sessionId);
+    await prisma.documentEmbedding.deleteMany({
+      where: { userId, source },
+    });
   },
 };

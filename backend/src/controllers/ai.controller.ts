@@ -1,6 +1,5 @@
 import { Response, NextFunction } from "express";
 import { ragService } from "../services/rag.service";
-import { chatbotService } from "../services/chatbot.service";
 import { insightService } from "../services/insight.service";
 import { AuthRequest } from "../types/auth.types";
 
@@ -15,7 +14,7 @@ export const chatWithAI = async (
     }
 
     const userId = req.user.id;
-    const response = await ragService.chat(userId, req.body.message);
+    const response = await ragService.chat(userId, req.body.sessionId, req.body.message);
     res.json(response);
   } catch (error) {
     next(error);
@@ -51,11 +50,7 @@ export const chatWithChatbot = async (
     }
 
     const userId = req.user.id;
-    const response = await chatbotService.chat(
-      userId,
-      req.body.sessionId,
-      req.body.message
-    );
+    const response = await ragService.chat(userId, req.body.sessionId, req.body.message);
     res.json(response);
   } catch (error) {
     next(error);
@@ -73,7 +68,7 @@ export const endChatSession = async (
     }
 
     const userId = req.user.id;
-    await chatbotService.endSession(userId, req.body.sessionId);
+    await ragService.endSession(userId, req.body.sessionId);
     res.json({ ok: true });
   } catch (error) {
     next(error);

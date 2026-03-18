@@ -91,8 +91,8 @@ export const aiSupplementService = {
   async generateSupplements(userId: string) {
     const retrievedContext = await retrieveContextBySources(
       userId,
-      "Generate supplement suggestions using progress and routine data.",
-      ["progress", "routine"],
+      "Generate supplement suggestions using progress and workout plan data.",
+      ["progress", "plan"],
       8,
       3000
     );

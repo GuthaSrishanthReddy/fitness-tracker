@@ -39,7 +39,6 @@ const Navbar = () => {
             <Link to="/user/progress">Progress</Link>
             <Link to="/user/my-trainer">Assigned Trainer</Link>
             <Link to="/user/explore-trainers">Find Trainers</Link>
-            <Link to="/user/rag">RAG Chat</Link>
             <Link to="/user/profile">Profile</Link>
           </>
         )}

@@ -84,15 +84,15 @@ export const aiDietService = {
   async generateDiet(userId: string) {
     const retrievedContext = await retrieveContextBySources(
       userId,
-      "Generate a concise nutrition plan from progress and routine data.",
-      ["progress", "routine"],
+      "Generate a concise nutrition plan from progress and workout plan data.",
+      ["progress", "plan"],
       8,
       3000
     );
 
     const prompt = `
 You are a helpful fitness nutrition assistant.
-Use the user's progress history and routine history to generate a concise meal plan.
+Use the user's progress history and workout plan history to generate a concise meal plan.
 
 Return ONLY valid JSON in this exact shape:
 [
@@ -148,5 +148,5 @@ export const getDietEmbeddings = async (userId: string) => {
 };
 
 export const getRoutineEmbeddings = async (userId: string) => {
-  return embeddingStoreService.getBySource(userId, "routine", "asc");
+  return embeddingStoreService.getBySource(userId, "plan", "asc");
 };

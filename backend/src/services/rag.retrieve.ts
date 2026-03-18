@@ -4,12 +4,12 @@ import { Prisma } from "@prisma/client";
 
 const TOP_K = 3;
 const DEFAULT_MAX_CHARS = 2000;
-const MIN_COSINE_SIMILARITY = 0.72;
+const MIN_COSINE_SIMILARITY = 0.70;
+const FALLBACK_SIMILARITY = 0.60;
 const DEFAULT_RAG_SOURCES = [
   "progress",
-  "routine",
-  "diet",
   "plan",
+  "diet",
   "supplement",
 ];
 
@@ -31,6 +31,7 @@ async function retrieveByCosineSimilarity(
       ? Prisma.sql`AND source IN (${Prisma.join(sources)})`
       : Prisma.empty;
 
+  // Try to get results at the primary similarity threshold
   const thresholdResults = await prisma.$queryRaw<RetrievedRow[]>`
     WITH dim_filtered AS (
       SELECT content, embedding
@@ -50,7 +51,8 @@ async function retrieveByCosineSimilarity(
 
   if (thresholdResults.length > 0) return thresholdResults;
 
-  const nearestByDimension = await prisma.$queryRaw<RetrievedRow[]>`
+  // Fallback: retrieve at lower threshold if nothing found
+  const fallbackResults = await prisma.$queryRaw<RetrievedRow[]>`
     WITH dim_filtered AS (
       SELECT content, embedding
       FROM "DocumentEmbedding"
@@ -62,23 +64,12 @@ async function retrieveByCosineSimilarity(
       content,
       1 - (embedding <=> ${queryEmbedding}::vector) AS similarity
     FROM dim_filtered
+    WHERE (1 - (embedding <=> ${queryEmbedding}::vector)) >= ${FALLBACK_SIMILARITY}
     ORDER BY similarity DESC
     LIMIT ${topK}
   `;
 
-  if (nearestByDimension.length > 0) return nearestByDimension;
-
-  // Final fallback: return latest records even if dimensions don't match.
-  return prisma.$queryRaw<RetrievedRow[]>`
-    SELECT
-      content,
-      0::double precision AS similarity
-    FROM "DocumentEmbedding"
-    WHERE "userId" = ${userId}
-      ${sourceFilter}
-    ORDER BY "createdAt" DESC
-    LIMIT ${topK}
-  `;
+  return fallbackResults;
 }
 
 export async function retrieveContext(

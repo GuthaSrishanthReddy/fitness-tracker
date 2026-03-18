@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { askRag } from "../../services/rag.service";
+import { askRag, endRagSession } from "../../services/rag.service";
 import ChatInput from "../../components/chatbot/ChatInput";
 import ChatMessage from "../../components/chatbot/ChatMessage";
 import "./RagChat.css";
@@ -20,6 +20,14 @@ const RagChat = () => {
       text: "RAG is live. Ask something about your stored progress, routines, or plans.",
     },
   ]);
+  const [sessionId] = useState(() => {
+    let id = localStorage.getItem("ragSessionId");
+    if (!id) {
+      id = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      localStorage.setItem("ragSessionId", id);
+    }
+    return id;
+  });
   const endRef = useRef<HTMLDivElement | null>(null);
 
   const onSend = async () => {
@@ -33,7 +41,7 @@ const RagChat = () => {
     setInput("");
     setSending(true);
     try {
-      const reply = await askRag(trimmed);
+      const reply = await askRag(trimmed, sessionId);
       setMessages((prev) => [
         ...prev,
         { id: `a-${Date.now()}`, sender: "ai", text: reply || "No response." },
@@ -55,6 +63,14 @@ const RagChat = () => {
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
+
+  useEffect(() => {
+    return () => {
+      endRagSession(sessionId).catch(() => {
+        // Ignore cleanup errors
+      });
+    };
+  }, [sessionId]);
 
   return (
     <section className="rag-page">

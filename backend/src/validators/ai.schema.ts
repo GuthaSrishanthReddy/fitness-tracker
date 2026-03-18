@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const ragChatSchema = z.object({
+  sessionId: z.string().min(1).max(128),
   message: z.string().min(1).max(4000),
 });
 
