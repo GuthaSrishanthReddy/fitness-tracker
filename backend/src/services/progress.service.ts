@@ -45,16 +45,9 @@ export const progressService = {
         }
       }
     } else {
-      mergedData.bodyFat = mergedData.bodyFat ?? 15;
-      mergedData.systolicBP = mergedData.systolicBP ?? 120;
-      mergedData.diastolicBP = mergedData.diastolicBP ?? 80;
       mergedData.restingHeartRate = mergedData.restingHeartRate ?? 70;
-      mergedData.creatinine = mergedData.creatinine ?? 0.9;
       mergedData.workoutFrequency = mergedData.workoutFrequency ?? 3;
       mergedData.workoutDuration = mergedData.workoutDuration ?? 45;
-      mergedData.cardioMinutes = mergedData.cardioMinutes ?? 0;
-      mergedData.sleepHours = mergedData.sleepHours ?? 7;
-      mergedData.stressLevel = mergedData.stressLevel ?? 3;
     }
 
     // Save progress: update today's entry if it exists, otherwise create a new one.
@@ -73,21 +66,17 @@ export const progressService = {
     const text = `
 Date: ${progress.createdAt}
 Weight: ${progress.weight} kg
-Body Fat: ${progress.bodyFat} %
-Muscle Mass: ${progress.muscleMass ?? "N/A"}
-Waist: ${progress.waistCircumference ?? "N/A"} cm
-Blood Pressure: ${progress.systolicBP}/${progress.diastolicBP}
-Heart Rate: ${progress.restingHeartRate}
-Fasting Sugar: ${progress.fastingSugar ?? "N/A"}
-Post Prandial Sugar: ${progress.postPrandialSugar ?? "N/A"}
-HbA1c: ${progress.hba1c ?? "N/A"}
-Cholesterol: LDL ${progress.ldl ?? "N/A"}, HDL ${progress.hdl ?? "N/A"}
-Triglycerides: ${progress.triglycerides ?? "N/A"}
-Workout Frequency: ${progress.workoutFrequency} times/week
-Workout Duration: ${progress.workoutDuration} minutes
-Cardio Minutes: ${progress.cardioMinutes}
-Sleep: ${progress.sleepHours} hours
-Stress Level: ${progress.stressLevel}
+Waist Circumference: ${progress.waistCircumference} cm
+Blood Pressure: ${progress.systolicBP ?? "N/A"}/${progress.diastolicBP ?? "N/A"} mmHg
+Body Fat: ${progress.bodyFat ?? "N/A"} %
+Muscle Mass: ${progress.muscleMass ?? "N/A"} kg
+Resting Heart Rate: ${progress.restingHeartRate} bpm
+Sleep Hours: ${progress.sleepHours} hours
+Protein Intake: ${progress.proteinIntake} g
+Cardio Minutes: ${progress.cardioMinutes} minutes
+Stress Level: ${progress.stressLevel} / 5
+Workout Frequency: ${progress.workoutFrequency ?? "N/A"} times/week
+Workout Duration: ${progress.workoutDuration ?? "N/A"} minutes
 Notes: ${progress.notes ?? "None"}
 `;
 

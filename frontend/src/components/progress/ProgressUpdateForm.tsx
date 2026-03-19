@@ -5,29 +5,16 @@ import "./ProgressUpdateForm.css";
 
 const emptyProgress: ProgressInput = {
   weight: 0,
-  bodyFat: 0,
-  muscleMass: undefined,
-  waistCircumference: undefined,
-  systolicBP: 0,
-  diastolicBP: 0,
+  waistCircumference: 0,
   restingHeartRate: 0,
-  fastingSugar: undefined,
-  postPrandialSugar: undefined,
-  hba1c: undefined,
-  creatinine: 0,
-  urea: undefined,
-  uricAcid: undefined,
-  totalCholesterol: undefined,
-  ldl: undefined,
-  hdl: undefined,
-  triglycerides: undefined,
-  proteinIntake: undefined,
-  creatineIntake: undefined,
-  workoutFrequency: 0,
-  workoutDuration: 0,
-  cardioMinutes: 0,
   sleepHours: 0,
+  proteinIntake: 0,
+  cardioMinutes: 0,
   stressLevel: 1,
+  bodyFat: undefined,
+  muscleMass: undefined,
+  workoutFrequency: undefined,
+  workoutDuration: undefined,
   notes: "",
 };
 
@@ -39,29 +26,16 @@ const toNumberOrUndefined = (value: string) => {
 
 const emptyFormState = {
   weight: "",
+  waistCircumference: "",
+  restingHeartRate: "",
+  sleepHours: "",
+  proteinIntake: "",
+  cardioMinutes: "",
+  stressLevel: "1",
   bodyFat: "",
   muscleMass: "",
-  waistCircumference: "",
-  systolicBP: "",
-  diastolicBP: "",
-  restingHeartRate: "",
-  fastingSugar: "",
-  postPrandialSugar: "",
-  hba1c: "",
-  creatinine: "",
-  urea: "",
-  uricAcid: "",
-  totalCholesterol: "",
-  ldl: "",
-  hdl: "",
-  triglycerides: "",
-  proteinIntake: "",
-  creatineIntake: "",
   workoutFrequency: "",
   workoutDuration: "",
-  cardioMinutes: "",
-  sleepHours: "",
-  stressLevel: "1",
   notes: "",
 };
 
@@ -141,29 +115,16 @@ export default function ProgressUpdateForm({
       const payload: ProgressInput = {
         ...emptyProgress,
         weight: Number(form.weight),
+        waistCircumference: Number(form.waistCircumference),
+        restingHeartRate: Number(form.restingHeartRate),
+        sleepHours: Number(form.sleepHours),
+        proteinIntake: Number(form.proteinIntake),
+        cardioMinutes: Number(form.cardioMinutes),
+        stressLevel: Number(form.stressLevel) || 1,
         bodyFat: toNumberOrUndefined(form.bodyFat),
         muscleMass: toNumberOrUndefined(form.muscleMass),
-        waistCircumference: toNumberOrUndefined(form.waistCircumference),
-        systolicBP: toNumberOrUndefined(form.systolicBP),
-        diastolicBP: toNumberOrUndefined(form.diastolicBP),
-        restingHeartRate: toNumberOrUndefined(form.restingHeartRate),
-        fastingSugar: toNumberOrUndefined(form.fastingSugar),
-        postPrandialSugar: toNumberOrUndefined(form.postPrandialSugar),
-        hba1c: toNumberOrUndefined(form.hba1c),
-        creatinine: toNumberOrUndefined(form.creatinine),
-        urea: toNumberOrUndefined(form.urea),
-        uricAcid: toNumberOrUndefined(form.uricAcid),
-        totalCholesterol: toNumberOrUndefined(form.totalCholesterol),
-        ldl: toNumberOrUndefined(form.ldl),
-        hdl: toNumberOrUndefined(form.hdl),
-        triglycerides: toNumberOrUndefined(form.triglycerides),
-        proteinIntake: toNumberOrUndefined(form.proteinIntake),
-        creatineIntake: toNumberOrUndefined(form.creatineIntake),
         workoutFrequency: toNumberOrUndefined(form.workoutFrequency),
         workoutDuration: toNumberOrUndefined(form.workoutDuration),
-        cardioMinutes: toNumberOrUndefined(form.cardioMinutes),
-        sleepHours: toNumberOrUndefined(form.sleepHours),
-        stressLevel: toNumberOrUndefined(form.stressLevel) ?? 1,
         notes: form.notes.trim() ? form.notes.trim() : undefined,
       };
 
@@ -202,7 +163,7 @@ export default function ProgressUpdateForm({
       <form className="progress-update__form" onSubmit={handleSubmit}>
         <div className="progress-update__grid">
           <label>
-            Weight (kg)
+            Weight (kg) *
             <input
               type="number"
               value={form.weight}
@@ -210,6 +171,7 @@ export default function ProgressUpdateForm({
               required
               min={20}
               max={300}
+              step="0.1"
             />
           </label>
           <label>
@@ -220,6 +182,7 @@ export default function ProgressUpdateForm({
               onChange={(e) => handleChange("bodyFat", e.target.value)}
               min={2}
               max={70}
+              step="0.1"
             />
           </label>
           <label>
@@ -230,169 +193,76 @@ export default function ProgressUpdateForm({
               onChange={(e) => handleChange("muscleMass", e.target.value)}
               min={5}
               max={80}
+              step="0.1"
             />
           </label>
           <label>
-            Waist Circumference (cm)
+            Waist Circumference (cm) *
             <input
               type="number"
               value={form.waistCircumference}
               onChange={(e) => handleChange("waistCircumference", e.target.value)}
+              required
               min={40}
               max={200}
+              step="0.1"
             />
           </label>
           <label>
-            Systolic BP
-            <input
-              type="number"
-              value={form.systolicBP}
-              onChange={(e) => handleChange("systolicBP", e.target.value)}
-              min={70}
-              max={250}
-            />
-          </label>
-          <label>
-            Diastolic BP
-            <input
-              type="number"
-              value={form.diastolicBP}
-              onChange={(e) => handleChange("diastolicBP", e.target.value)}
-              min={40}
-              max={150}
-            />
-          </label>
-          <label>
-            Resting Heart Rate
+            Resting Heart Rate (bpm) *
             <input
               type="number"
               value={form.restingHeartRate}
               onChange={(e) => handleChange("restingHeartRate", e.target.value)}
+              required
               min={30}
               max={200}
             />
           </label>
           <label>
-            Fasting Sugar
+            Sleep Hours *
             <input
               type="number"
-              value={form.fastingSugar}
-              onChange={(e) => handleChange("fastingSugar", e.target.value)}
-              min={50}
-              max={500}
-            />
-          </label>
-          <label>
-            Post Prandial Sugar
-            <input
-              type="number"
-              value={form.postPrandialSugar}
-              onChange={(e) => handleChange("postPrandialSugar", e.target.value)}
-              min={50}
-              max={500}
-            />
-          </label>
-          <label>
-            HbA1c
-            <input
-              type="number"
-              value={form.hba1c}
-              onChange={(e) => handleChange("hba1c", e.target.value)}
-              min={3}
-              max={15}
+              value={form.sleepHours}
+              onChange={(e) => handleChange("sleepHours", e.target.value)}
+              required
+              min={0}
+              max={24}
               step="0.1"
             />
           </label>
           <label>
-            Creatinine
-            <input
-              type="number"
-              value={form.creatinine}
-              onChange={(e) => handleChange("creatinine", e.target.value)}
-              min={0.2}
-              max={20}
-              step="0.01"
-            />
-          </label>
-          <label>
-            Urea
-            <input
-              type="number"
-              value={form.urea}
-              onChange={(e) => handleChange("urea", e.target.value)}
-              min={5}
-              max={200}
-            />
-          </label>
-          <label>
-            Uric Acid
-            <input
-              type="number"
-              value={form.uricAcid}
-              onChange={(e) => handleChange("uricAcid", e.target.value)}
-              min={1}
-              max={20}
-              step="0.1"
-            />
-          </label>
-          <label>
-            Total Cholesterol
-            <input
-              type="number"
-              value={form.totalCholesterol}
-              onChange={(e) => handleChange("totalCholesterol", e.target.value)}
-              min={50}
-              max={600}
-            />
-          </label>
-          <label>
-            LDL
-            <input
-              type="number"
-              value={form.ldl}
-              onChange={(e) => handleChange("ldl", e.target.value)}
-              min={10}
-              max={400}
-            />
-          </label>
-          <label>
-            HDL
-            <input
-              type="number"
-              value={form.hdl}
-              onChange={(e) => handleChange("hdl", e.target.value)}
-              min={10}
-              max={200}
-            />
-          </label>
-          <label>
-            Triglycerides
-            <input
-              type="number"
-              value={form.triglycerides}
-              onChange={(e) => handleChange("triglycerides", e.target.value)}
-              min={20}
-              max={1000}
-            />
-          </label>
-          <label>
-            Protein Intake (g)
+            Protein Intake (g) *
             <input
               type="number"
               value={form.proteinIntake}
               onChange={(e) => handleChange("proteinIntake", e.target.value)}
+              required
               min={0}
               max={400}
+              step="0.1"
             />
           </label>
           <label>
-            Creatine Intake (g)
+            Cardio Minutes *
             <input
               type="number"
-              value={form.creatineIntake}
-              onChange={(e) => handleChange("creatineIntake", e.target.value)}
+              value={form.cardioMinutes}
+              onChange={(e) => handleChange("cardioMinutes", e.target.value)}
+              required
               min={0}
-              max={20}
+              max={1000}
+            />
+          </label>
+          <label>
+            Stress Level (1-5) *
+            <input
+              type="number"
+              value={form.stressLevel}
+              onChange={(e) => handleChange("stressLevel", e.target.value)}
+              required
+              min={1}
+              max={5}
             />
           </label>
           <label>
@@ -413,37 +283,6 @@ export default function ProgressUpdateForm({
               onChange={(e) => handleChange("workoutDuration", e.target.value)}
               min={0}
               max={300}
-            />
-          </label>
-          <label>
-            Cardio Minutes
-            <input
-              type="number"
-              value={form.cardioMinutes}
-              onChange={(e) => handleChange("cardioMinutes", e.target.value)}
-              min={0}
-              max={1000}
-            />
-          </label>
-          <label>
-            Sleep Hours
-            <input
-              type="number"
-              value={form.sleepHours}
-              onChange={(e) => handleChange("sleepHours", e.target.value)}
-              min={0}
-              max={24}
-              step="0.1"
-            />
-          </label>
-          <label>
-            Stress Level (1-5)
-            <input
-              type="number"
-              value={form.stressLevel}
-              onChange={(e) => handleChange("stressLevel", e.target.value)}
-              min={1}
-              max={5}
             />
           </label>
         </div>

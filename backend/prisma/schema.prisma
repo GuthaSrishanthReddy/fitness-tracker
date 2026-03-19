@@ -53,30 +53,19 @@ model ClientTrainer {
 model Progress {
   id                 String   @id @default(uuid())
   userId             String
-  weight             Float
-  bodyFat            Float
-  muscleMass         Float?
+  weight             Float?
   waistCircumference Float?
-  systolicBP         Int
-  diastolicBP        Int
-  restingHeartRate   Int
-  fastingSugar       Float?
-  postPrandialSugar  Float?
-  hba1c              Float?
-  creatinine         Float
-  urea               Float?
-  uricAcid           Float?
-  totalCholesterol   Float?
-  ldl                Float?
-  hdl                Float?
-  triglycerides      Float?
+  systolicBP         Int?
+  diastolicBP        Int?
+  restingHeartRate   Int?
+  sleepHours         Float?
   proteinIntake      Float?
-  creatineIntake     Float?
-  workoutFrequency   Int
-  workoutDuration    Int
-  cardioMinutes      Int
-  sleepHours         Float
-  stressLevel        Int
+  cardioMinutes      Int?
+  stressLevel        Int?
+  bodyFat            Float?
+  muscleMass         Float?
+  workoutFrequency   Int?
+  workoutDuration    Int?
   notes              String?
   createdAt          DateTime @default(now())
   user               User     @relation(fields: [userId], references: [id])

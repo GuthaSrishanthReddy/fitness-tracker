@@ -50,94 +50,44 @@ export default function RecentProgress({
             <strong>{latest.weight} kg</strong>
           </div>
           <div>
-            <span>Body Fat</span>
-            <strong>{latest.bodyFat} %</strong>
+            <span>Waist Circumference</span>
+            <strong>{latest.waistCircumference} cm</strong>
           </div>
           <div>
-            <span>Muscle Mass</span>
-            <strong>{latest.muscleMass ?? "N/A"}</strong>
-          </div>
-          <div>
-            <span>Waist</span>
-            <strong>{latest.waistCircumference ?? "N/A"} cm</strong>
-          </div>
-          <div>
-            <span>Blood Pressure</span>
-            <strong>
-              {latest.systolicBP}/{latest.diastolicBP}
-            </strong>
-          </div>
-          <div>
-            <span>Resting HR</span>
+            <span>Resting Heart Rate</span>
             <strong>{latest.restingHeartRate} bpm</strong>
           </div>
           <div>
-            <span>Fasting Sugar</span>
-            <strong>{latest.fastingSugar ?? "N/A"}</strong>
-          </div>
-          <div>
-            <span>Post Prandial</span>
-            <strong>{latest.postPrandialSugar ?? "N/A"}</strong>
-          </div>
-          <div>
-            <span>HbA1c</span>
-            <strong>{latest.hba1c ?? "N/A"}</strong>
-          </div>
-          <div>
-            <span>Creatinine</span>
-            <strong>{latest.creatinine}</strong>
-          </div>
-          <div>
-            <span>Urea</span>
-            <strong>{latest.urea ?? "N/A"}</strong>
-          </div>
-          <div>
-            <span>Uric Acid</span>
-            <strong>{latest.uricAcid ?? "N/A"}</strong>
-          </div>
-          <div>
-            <span>Total Cholesterol</span>
-            <strong>{latest.totalCholesterol ?? "N/A"}</strong>
-          </div>
-          <div>
-            <span>LDL</span>
-            <strong>{latest.ldl ?? "N/A"}</strong>
-          </div>
-          <div>
-            <span>HDL</span>
-            <strong>{latest.hdl ?? "N/A"}</strong>
-          </div>
-          <div>
-            <span>Triglycerides</span>
-            <strong>{latest.triglycerides ?? "N/A"}</strong>
+            <span>Sleep Hours</span>
+            <strong>{latest.sleepHours} hours</strong>
           </div>
           <div>
             <span>Protein Intake</span>
-            <strong>{latest.proteinIntake ?? "N/A"}</strong>
-          </div>
-          <div>
-            <span>Creatine Intake</span>
-            <strong>{latest.creatineIntake ?? "N/A"}</strong>
-          </div>
-          <div>
-            <span>Workout Frequency</span>
-            <strong>{latest.workoutFrequency}</strong>
-          </div>
-          <div>
-            <span>Workout Duration</span>
-            <strong>{latest.workoutDuration} min</strong>
+            <strong>{latest.proteinIntake} g</strong>
           </div>
           <div>
             <span>Cardio Minutes</span>
-            <strong>{latest.cardioMinutes}</strong>
-          </div>
-          <div>
-            <span>Sleep Hours</span>
-            <strong>{latest.sleepHours}</strong>
+            <strong>{latest.cardioMinutes} min</strong>
           </div>
           <div>
             <span>Stress Level</span>
-            <strong>{latest.stressLevel}</strong>
+            <strong>{latest.stressLevel} / 5</strong>
+          </div>
+          <div>
+            <span>Body Fat</span>
+            <strong>{latest.bodyFat ?? "N/A"} %</strong>
+          </div>
+          <div>
+            <span>Muscle Mass</span>
+            <strong>{latest.muscleMass ?? "N/A"} kg</strong>
+          </div>
+          <div>
+            <span>Workout Frequency</span>
+            <strong>{latest.workoutFrequency ?? "N/A"} times/week</strong>
+          </div>
+          <div>
+            <span>Workout Duration</span>
+            <strong>{latest.workoutDuration ?? "N/A"} min</strong>
           </div>
           <div className="recent-progress__notes">
             <span>Notes</span>
