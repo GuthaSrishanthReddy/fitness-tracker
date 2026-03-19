@@ -71,7 +71,7 @@ type ParsedPlanItem = {
 };
 
 type PlanParseDiagnostics = {
-  source: "json" | "repaired_json" | "nested_regex" | "flat_regex" | "line_format" | "empty";
+  source: "json" | "repaired_json" | "nested_regex" | "flat_regex" | "line_format" | "text_salvage" | "empty";
   validJson: boolean;
   repairedJson: boolean;
   truncated: boolean;
@@ -402,6 +402,70 @@ const parseLinePlanItems = (text: string): ParsedPlanItem[] => {
   return items;
 };
 
+const parseFreeformTextPlanItems = (text: string): ParsedPlanItem[] => {
+  const lines = normalizePlanText(text)
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  const items: ParsedPlanItem[] = [];
+  let currentDay: string | undefined;
+  let currentFocus = "General";
+
+  for (const line of lines) {
+    const dayHeader = line.match(
+      /^(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\s*:?\s*(.*)$/i
+    );
+    if (dayHeader) {
+      currentDay = dayHeader[1];
+      const trailing = dayHeader[2].trim();
+      currentFocus = trailing
+        .replace(/^[-|:]/, "")
+        .trim()
+        .replace(/^focus\s*[:\-]?\s*/i, "") || "General";
+      continue;
+    }
+
+    if (!currentDay) continue;
+
+    const bullet = line.replace(/^[-*•\d.)\s]+/, "").trim();
+    if (!bullet) continue;
+
+    if (/^rest\b/i.test(bullet)) {
+      items.push({
+        day: currentDay,
+        focus: "Rest",
+        name: "",
+        sets: "",
+        reps: "",
+        notes: "",
+      });
+      continue;
+    }
+
+    const structured = bullet.match(
+      /^(.*?)(?:\s+[xX]\s*|\s*[-,:]\s*)?(\d+(?:-\d+)?)?\s*(?:sets?)?\s*(?:[xX]\s*)?(\d+(?:-\d+)?(?:\s*each leg)?)?\s*(.*)$/i
+    );
+
+    const name = structured?.[1]?.trim() || bullet;
+    const sets = structured?.[2]?.trim() || "";
+    const reps = structured?.[3]?.trim() || "";
+    const notes = structured?.[4]?.trim() || "";
+
+    if (!name) continue;
+    items.push({
+      day: currentDay,
+      focus: currentFocus,
+      name,
+      sets,
+      reps,
+      notes,
+    });
+  }
+
+  return items;
+};
+
 const parsePlanResponse = (
   raw: string
 ): { plan: PlanItem[]; diagnostics: PlanParseDiagnostics } => {
@@ -499,6 +563,23 @@ const parsePlanResponse = (
         truncated: false,
         itemCount: lineItems.length,
         workoutCount: linePlan.reduce((sum, day) => sum + day.workouts.length, 0),
+        outputLength: raw.length,
+      },
+    };
+  }
+
+  const freeformItems = parseFreeformTextPlanItems(raw);
+  const freeformPlan = normalizeParsedItems(freeformItems);
+  if (freeformPlan.some((day) => day.workouts.length > 0)) {
+    return {
+      plan: freeformPlan,
+      diagnostics: {
+        source: "text_salvage",
+        validJson: false,
+        repairedJson: false,
+        truncated: false,
+        itemCount: freeformItems.length,
+        workoutCount: freeformPlan.reduce((sum, day) => sum + day.workouts.length, 0),
         outputLength: raw.length,
       },
     };
