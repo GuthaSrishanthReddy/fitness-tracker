@@ -39,8 +39,10 @@ export const createOrUpdateProgress = async (
       req.body
     );
 
-    // Plan generation is required for this endpoint.
-    await aiPlanService.generatePlan(userId);
+    // Plan generation is best-effort and should not block progress updates.
+    aiPlanService.generatePlan(userId).catch((error) => {
+      console.error("Failed to generate AI plan after progress update", error);
+    });
 
     // Diet and supplements are best-effort and should not block progress updates.
     Promise.allSettled([

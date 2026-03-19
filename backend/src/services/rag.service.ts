@@ -15,7 +15,7 @@ type RetrievedResult = {
 async function retrieveSimilarEmbeddings(
   userId: string,
   queryEmbedding: number[],
-  topK: number = 5
+  topK: number = 8
 ): Promise<RetrievedResult[]> {
   const queryDimensions = queryEmbedding.length;
 
@@ -88,10 +88,10 @@ export const ragService = {
       `;
 
       // Retrieve relevant embeddings using RAG similarity search
-      const ragResults = await retrieveSimilarEmbeddings(userId, userEmbedding, 5);
+      const ragResults = await retrieveSimilarEmbeddings(userId, userEmbedding, 8);
       
-      // Filter results with reasonable similarity
-      const relevantResults = ragResults.filter((r) => r.similarity >= 0.60);
+      // Filter results with reasonable similarity threshold
+      const relevantResults = ragResults.filter((r) => r.similarity >= 0.50);
 
       // Get session history for conversational context
       const sessionHistory = await retrieveSessionHistory(userId, sessionId, 5);
@@ -104,7 +104,9 @@ export const ragService = {
         : "No relevant historical data found.";
 
       const prompt = `
-You are a helpful fitness and nutrition assistant. Use the retrieved data below to answer the user's question.
+You are a helpful professional fitness coach. Answer the user's query using the provided context using rag similarity search and session history. Use the retrieved data to provide a helpful and specific answer. If the retrieved data is insufficient, acknowledge it and provide safe general guidance.
+
+Use readable formatting with bullets, line breaks, and indents as needed to make the information clear and easy to read. Be friendly and informational like a best friend.
 
 Retrieved Data (from user's fitness history):
 ${ragContext}
@@ -114,15 +116,13 @@ ${sessionHistory || "(First message in this conversation)"}
 
 User Question:
 ${normalized}
-
-Provide a helpful, specific response based on the retrieved data. If the data is insufficient, acknowledge it and provide safe general guidance.
 `;
 
       // Call GenAI with RAG context
       const result = await model.generateContent({
         contents: [{ role: "user", parts: [{ text: prompt }] }],
         generationConfig: {
-          maxOutputTokens: 1000,
+          maxOutputTokens: 4000,
           temperature: 0.3,
           topP: 0.9,
         },

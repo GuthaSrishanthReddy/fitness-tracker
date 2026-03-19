@@ -41,3 +41,21 @@ export const updateMe = async (
     next(error);
   }
 };
+
+export const setup = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const userId = req.user.id;
+    const result = await userService.setup(userId, req.body);
+    res.status(201).json(result);
+  } catch (error) {
+    next(error);
+  }
+};

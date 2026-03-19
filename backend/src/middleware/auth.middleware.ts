@@ -2,12 +2,13 @@ import { Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { AuthRequest, JwtUser } from "../types/auth.types";
 import { env } from "../config/env";
+import { prisma } from "../config/db";
 
-export const authMiddleware = (
+export const authMiddleware = async (
   req: AuthRequest,
   res: Response,
   next: NextFunction
-): void => {
+): Promise<void> => {
   try {
     const authHeader = req.headers.authorization;
 
@@ -23,11 +24,24 @@ export const authMiddleware = (
       env.JWT_SECRET
     ) as JwtUser;
 
-    // decoded now HAS id, email, role
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.id },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+      },
+    });
+
+    if (!user) {
+      res.status(401).json({ message: "Invalid token" });
+      return;
+    }
+
     req.user = {
-      id: decoded.id,
-      email: decoded.email,
-      role: decoded.role
+      id: user.id,
+      email: user.email,
+      role: user.role
     };
 
     next();

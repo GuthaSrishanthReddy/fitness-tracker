@@ -5,6 +5,9 @@ export const rateLimitConfig = rateLimit({
   max: 100,                // 100 requests per IP
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) =>
+    req.path === "/api/plans/ai" ||
+    req.path === "/api/plans/ai/latest",
   message: {
     success: false,
     message: "Too many requests, please try again later"
