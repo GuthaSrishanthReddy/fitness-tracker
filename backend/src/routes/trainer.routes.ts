@@ -1,9 +1,13 @@
 import { Router } from "express";
 
 import {
-  getTrainerProfile,
+  createTrainerRequest,
   exploreTrainers,
   getMyClients,
+  getTrainerById,
+  getTrainerProfile,
+  getTrainerRequests,
+  respondToTrainerRequest,
   updateTrainerProfile
 } from "../controllers/trainer.controller";
 
@@ -21,6 +25,13 @@ router.get(
   getTrainerProfile
 );
 
+router.put(
+  "/me",
+  authMiddleware,
+  roleMiddleware("TRAINER"),
+  updateTrainerProfile
+);
+
 router.get(
   "/clients",
   authMiddleware,
@@ -28,11 +39,27 @@ router.get(
   getMyClients
 );
 
-router.put(
-  "/me",
+router.get(
+  "/requests",
   authMiddleware,
   roleMiddleware("TRAINER"),
-  updateTrainerProfile
+  getTrainerRequests
+);
+
+router.patch(
+  "/requests/:requestId",
+  authMiddleware,
+  roleMiddleware("TRAINER"),
+  respondToTrainerRequest
+);
+
+router.get("/:trainerId", authMiddleware, getTrainerById);
+
+router.post(
+  "/:trainerId/request",
+  authMiddleware,
+  roleMiddleware("USER"),
+  createTrainerRequest
 );
 
 export default router;

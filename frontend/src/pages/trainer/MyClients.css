@@ -4,8 +4,35 @@
   gap: 2rem;
 }
 
+.my-clients__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.my-clients__requests-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.8rem 1.2rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(0, 240, 255, 0.24);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  text-decoration: none;
+  font-weight: 700;
+}
+
 .my-clients__grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 2rem;
+}
+
+@media (max-width: 640px) {
+  .my-clients__header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }

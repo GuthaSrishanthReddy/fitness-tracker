@@ -1,4 +1,5 @@
 .trainer-card {
+  display: block;
   padding: 1.5rem;
   border-radius: var(--radius-lg);
   background: var(--bg-surface);
@@ -7,6 +8,9 @@
   border: var(--glass-border);
   box-shadow: var(--glass-shadow);
   transition: transform var(--transition-smooth), box-shadow var(--transition-smooth), border-color var(--transition-smooth);
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
 }
 
 .trainer-card:hover {

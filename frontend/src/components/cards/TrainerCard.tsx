@@ -1,16 +1,18 @@
+import { Link } from "react-router-dom";
 import "./TrainerCard.css";
 
 type Props = {
   name: string;
   expertise: string;
+  to: string;
 };
 
-const TrainerCard = ({ name, expertise="" }: Props) => {
+const TrainerCard = ({ name, expertise = "", to }: Props) => {
   return (
-    <div className="trainer-card">
+    <Link to={to} className="trainer-card">
       <h4>{name}</h4>
-      <p>{expertise}</p>
-    </div>
+      <p>{expertise || "View trainer details"}</p>
+    </Link>
   );
 };
 

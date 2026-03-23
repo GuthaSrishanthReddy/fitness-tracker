@@ -45,6 +45,7 @@ const ExploreTrainers = () => {
               key={trainer.id}
               name={trainer.user.name}
               expertise={trainer.expertise.join(", ")}
+              to={`/user/trainers/${trainer.id}`}
             />
           ))}
       </div>

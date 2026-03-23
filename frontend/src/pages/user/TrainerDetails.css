@@ -1,0 +1,178 @@
+.trainer-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.trainer-details--state {
+  min-height: 220px;
+  align-items: center;
+  justify-content: center;
+}
+
+.trainer-details__panel {
+  padding: 2rem;
+  border-radius: var(--radius-lg);
+  border: var(--glass-border);
+  background:
+    radial-gradient(circle at top right, rgba(255, 0, 85, 0.12), transparent 32%),
+    rgba(12, 15, 28, 0.88);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+
+.trainer-details__panel--hero {
+  padding: 2.25rem;
+}
+
+.trainer-details__hero-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.trainer-details__eyebrow {
+  margin: 0 0 0.35rem;
+  font-size: 0.82rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-cyan);
+}
+
+.trainer-details h2,
+.trainer-details h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-family: var(--font-display);
+}
+
+.trainer-details h2 {
+  font-size: clamp(2rem, 4vw, 2.7rem);
+}
+
+.trainer-details h3 {
+  font-size: 1.4rem;
+}
+
+.trainer-details__subtitle,
+.trainer-details__empty,
+.trainer-details__achievement-card p {
+  color: var(--text-secondary);
+}
+
+.trainer-details__subtitle {
+  margin: 0.5rem 0 0;
+}
+
+.trainer-details__section {
+  margin-top: 1.6rem;
+}
+
+.trainer-details__request-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding: 1rem 1.1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.trainer-details__request-label {
+  margin: 0;
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.trainer-details__request-status,
+.trainer-details__success,
+.trainer-details__error {
+  margin: 0.35rem 0 0;
+  color: var(--text-secondary);
+}
+
+.trainer-details__success {
+  margin-top: 1rem;
+  color: var(--accent-cyan);
+}
+
+.trainer-details__error {
+  margin-top: 1rem;
+  color: #ff7b8f;
+}
+
+.trainer-details__request-btn {
+  padding: 0.85rem 1.2rem;
+  border: none;
+  border-radius: 999px;
+  background: var(--gradient-neon);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 10px 24px rgba(255, 0, 85, 0.2);
+}
+
+.trainer-details__request-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.trainer-details__tag-list,
+.trainer-details__qualification-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  margin-top: 1rem;
+}
+
+.trainer-details__tag,
+.trainer-details__qualification-card {
+  padding: 0.8rem 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
+
+.trainer-details__achievement-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 1.2rem;
+}
+
+.trainer-details__achievement-card {
+  padding: 1.2rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.trainer-details__achievement-card strong,
+.trainer-details__qualification-card strong {
+  color: var(--text-primary);
+}
+
+@media (max-width: 640px) {
+  .trainer-details__panel,
+  .trainer-details__panel--hero {
+    padding: 1.35rem;
+  }
+
+  .trainer-details__hero-top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .trainer-details__request-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

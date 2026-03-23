@@ -21,6 +21,7 @@ model User {
   plans           Plan?
   progress        Progress[]
   trainerProfile  Trainer?
+  trainerRequests TrainerRequest[]
   conversations   Conversation[]  @relation("ConversationParticipants")
   fitnessGoal   FitnessGoal
   fitnessLevel  FitnessLevel
@@ -36,7 +37,23 @@ model Trainer {
   rating          Float?
   createdAt       DateTime        @default(now())
   clients         ClientTrainer[]
+  requests        TrainerRequest[]
   user            User            @relation(fields: [userId], references: [id])
+}
+
+model TrainerRequest {
+  id        String               @id @default(uuid())
+  trainerId String
+  userId    String
+  status    TrainerRequestStatus @default(PENDING)
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+  trainer   Trainer              @relation(fields: [trainerId], references: [id])
+  user      User                 @relation(fields: [userId], references: [id])
+
+  @@unique([trainerId, userId])
+  @@index([trainerId, status])
+  @@index([userId, status])
 }
 
 model ClientTrainer {
@@ -120,6 +137,12 @@ model DocumentEmbedding {
 enum Role {
   USER
   TRAINER
+}
+
+enum TrainerRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
 }
 
 enum FitnessGoal {

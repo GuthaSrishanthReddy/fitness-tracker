@@ -18,6 +18,7 @@ import MyTrainer from "../pages/user/MyTrainer";
 import ExploreTrainers from "../pages/user/ExploreTrainers";
 import Profile from "../pages/user/Profile";
 import UserDataForm from "../pages/user/UserDataForm";
+import TrainerDetails from "../pages/user/TrainerDetails";
 import ChatBotWindow from "../components/chatbot/ChatWindow";
 
 /* Trainer */
@@ -26,6 +27,7 @@ import ExploreClients from "../pages/trainer/ExploreClients";
 import ClientDetails from "../pages/trainer/ClientDetails";
 import MyHistory from "../pages/trainer/MyHistory";
 import TrainerProfile from "../pages/trainer/TrainerProfile";
+import TrainerRequests from "../pages/trainer/TrainerRequests";
 
 const AppRoutes = () => {
   return (
@@ -75,6 +77,7 @@ const AppRoutes = () => {
         <Route path="progress" element={<UpdateProgress />} />
         <Route path="my-trainer" element={<MyTrainer />} />
         <Route path="explore-trainers" element={<ExploreTrainers />} />
+        <Route path="trainers/:trainerId" element={<TrainerDetails />} />
         <Route path="profile" element={<Profile />} />
         <Route path="user-data" element={<UserDataForm />} />
       </Route>
@@ -101,6 +104,7 @@ const AppRoutes = () => {
         <Route path="dashboard" element={<TrainerDashboard />} />
         <Route path="clients" element={<MyClients />} />
         <Route path="explore-clients" element={<ExploreClients />} />
+        <Route path="requests" element={<TrainerRequests />} />
         <Route path="client-details" element={<ClientDetails />} />
         <Route path="history" element={<MyHistory />} />
         <Route path="profile" element={<TrainerProfile />} />
