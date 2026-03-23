@@ -1,7 +1,10 @@
 export interface TrainerProfile {
   id: string;
-  name: string;
+  userId: string;
+  qualifications: string[];
   expertise: string[];
+  experienceYears: number;
+  rating?: number | null;
 }
 
 export interface TrainerListItem {
