@@ -130,6 +130,26 @@ export const getMyClients = async (
   }
 };
 
+export const getClientProgressHistory = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const result = await trainerService.getClientProgressHistory(
+      req.user.id,
+      req.params.clientLinkId
+    );
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const updateTrainerProfile = async (
   req: AuthRequest,
   res: Response,

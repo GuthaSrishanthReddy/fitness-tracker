@@ -17,6 +17,25 @@ export const userService = {
     });
   },
 
+  async getMyTrainer(userId: string) {
+    return prisma.clientTrainer.findFirst({
+      where: { userId },
+      include: {
+        trainer: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true
+              }
+            }
+          }
+        }
+      }
+    });
+  },
+
   async updateMe(userId: string, data: any) {
     const allowed: Record<string, unknown> = {};
 

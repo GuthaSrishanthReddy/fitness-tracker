@@ -12,10 +12,13 @@
   border: var(--glass-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--glass-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
 .my-trainer__chat {
-  height: 500px;
+  min-height: 240px;
   background: var(--bg-surface);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
@@ -23,4 +26,112 @@
   border-radius: var(--radius-lg);
   box-shadow: var(--glass-shadow);
   overflow: hidden;
+}
+
+.my-trainer__identity {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.my-trainer__eyebrow {
+  margin: 0 0 0.35rem;
+  color: var(--accent-cyan);
+  font-size: 0.82rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.my-trainer__details h3,
+.my-trainer__details h4 {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.my-trainer__email,
+.my-trainer__since,
+.my-trainer__stat-card p,
+.my-trainer__empty,
+.my-trainer__chat-placeholder p {
+  color: var(--text-secondary);
+}
+
+.my-trainer__email {
+  margin: 0.4rem 0 0;
+}
+
+.my-trainer__since {
+  white-space: nowrap;
+}
+
+.my-trainer__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.my-trainer__stat-card {
+  padding: 1rem 1.1rem;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.my-trainer__stat-card strong {
+  color: var(--text-primary);
+  font-size: 1.1rem;
+}
+
+.my-trainer__stat-card p {
+  margin: 0.4rem 0 0;
+}
+
+.my-trainer__section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.my-trainer__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+.my-trainer__tag {
+  padding: 0.7rem 0.95rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.16), rgba(255, 0, 85, 0.16));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.my-trainer__tag--soft {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.my-trainer__chat-placeholder {
+  height: 100%;
+  min-height: 240px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.my-trainer__chat-placeholder h4 {
+  margin: 0 0 0.5rem;
+  color: var(--text-primary);
+}
+
+@media (max-width: 640px) {
+  .my-trainer__identity {
+    flex-direction: column;
+  }
+
+  .my-trainer__since {
+    white-space: normal;
+  }
 }

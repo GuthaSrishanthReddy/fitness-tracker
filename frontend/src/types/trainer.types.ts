@@ -47,3 +47,22 @@ export interface TrainerRequestItem {
     activityType: string;
   };
 }
+
+export interface AssignedTrainer {
+  id: string;
+  userId: string;
+  createdAt: string;
+  trainer: {
+    id: string;
+    userId: string;
+    qualifications: string[];
+    expertise: string[];
+    experienceYears: number;
+    rating?: number | null;
+    user: {
+      id: string;
+      name: string;
+      email: string;
+    };
+  };
+}

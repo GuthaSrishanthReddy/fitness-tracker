@@ -5,13 +5,16 @@ import type {
   TrainerProfile,
   TrainerRequestItem
 } from "../types/trainer.types";
-import type { ClientListItem } from "../types/client.types";
+import type { ClientListItem, ClientProgressDetails } from "../types/client.types";
 
 export const fetchExploreClients = () =>
   api<ClientListItem[]>("/trainer/explore-clients");
 
 export const fetchMyClients = () =>
   api<ClientListItem[]>("/trainers/clients");
+
+export const fetchTrainerClientDetails = (clientLinkId: string) =>
+  api<ClientProgressDetails>(`/trainers/clients/${clientLinkId}`);
 
 
 export const fetchTrainerProfile = () =>

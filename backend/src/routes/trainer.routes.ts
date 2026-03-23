@@ -3,6 +3,7 @@ import { Router } from "express";
 import {
   createTrainerRequest,
   exploreTrainers,
+  getClientProgressHistory,
   getMyClients,
   getTrainerById,
   getTrainerProfile,
@@ -37,6 +38,13 @@ router.get(
   authMiddleware,
   roleMiddleware("TRAINER"),
   getMyClients
+);
+
+router.get(
+  "/clients/:clientLinkId",
+  authMiddleware,
+  roleMiddleware("TRAINER"),
+  getClientProgressHistory
 );
 
 router.get(

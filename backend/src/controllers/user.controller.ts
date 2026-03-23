@@ -23,6 +23,23 @@ export const getMe = async (
   }
 };
 
+export const getMyTrainer = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const trainer = await userService.getMyTrainer(req.user.id);
+    res.json(trainer);
+  } catch (error) {
+    next(error);
+  }
+};
+
 
 export const updateMe = async (
   req: AuthRequest,

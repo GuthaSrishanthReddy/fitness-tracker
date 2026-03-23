@@ -105,7 +105,7 @@ const AppRoutes = () => {
         <Route path="clients" element={<MyClients />} />
         <Route path="explore-clients" element={<ExploreClients />} />
         <Route path="requests" element={<TrainerRequests />} />
-        <Route path="client-details" element={<ClientDetails />} />
+        <Route path="client-details/:clientLinkId" element={<ClientDetails />} />
         <Route path="history" element={<MyHistory />} />
         <Route path="profile" element={<TrainerProfile />} />
       </Route>

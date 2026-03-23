@@ -338,5 +338,56 @@ export const trainerService = {
         }
       }
     });
+  },
+
+  async getClientProgressHistory(trainerUserId: string, clientLinkId: string) {
+    const trainer = await prisma.trainer.findUnique({
+      where: { userId: trainerUserId },
+      select: { id: true }
+    });
+
+    if (!trainer) {
+      throw notFoundError("Trainer profile not found");
+    }
+
+    const assignment = await prisma.clientTrainer.findFirst({
+      where: {
+        id: clientLinkId,
+        trainerId: trainer.id
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            fitnessGoal: true,
+            fitnessLevel: true,
+            activityType: true
+          }
+        }
+      }
+    });
+
+    if (!assignment) {
+      throw notFoundError("Client relationship not found");
+    }
+
+    const progressHistory = await prisma.progress.findMany({
+      where: {
+        userId: assignment.userId,
+        createdAt: {
+          gte: assignment.createdAt
+        }
+      },
+      orderBy: {
+        createdAt: "desc"
+      }
+    });
+
+    return {
+      assignment,
+      progressHistory
+    };
   }
 };
