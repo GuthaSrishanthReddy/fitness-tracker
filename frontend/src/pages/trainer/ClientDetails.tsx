@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
-import { fetchTrainerClientDetails } from "../../services/trainer.service";
+import { useNavigate, useParams } from "react-router-dom";
+import { fetchTrainerClientDetails, removeClient } from "../../services/trainer.service";
 import type { ClientProgressDetails } from "../../types/client.types";
 import "./ClientDetails.css";
 
 const ClientDetails = () => {
   const { clientLinkId } = useParams();
+  const navigate = useNavigate();
   const [details, setDetails] = useState<ClientProgressDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [removing, setRemoving] = useState(false);
 
   useEffect(() => {
     if (!clientLinkId) {
@@ -34,6 +36,19 @@ const ClientDetails = () => {
   }, [clientLinkId]);
 
   const latest = useMemo(() => details?.progressHistory[0] ?? null, [details]);
+
+  const handleRemove = async () => {
+    if (!clientLinkId) return;
+    if (!window.confirm("Remove this client? They will no longer be assigned to you.")) return;
+    try {
+      setRemoving(true);
+      await removeClient(clientLinkId);
+      navigate("/trainer/clients");
+    } catch (err: any) {
+      setError(err.message || "Failed to remove client.");
+      setRemoving(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -67,9 +82,18 @@ const ClientDetails = () => {
             <p className="client-details__subtitle">{details.assignment.user.email}</p>
           </div>
 
-          <span className="client-details__since">
-            Since {new Date(details.assignment.createdAt).toLocaleDateString()}
-          </span>
+          <div className="client-details__hero-actions">
+            <span className="client-details__since">
+              Since {new Date(details.assignment.createdAt).toLocaleDateString()}
+            </span>
+            <button
+              className="danger-btn"
+              onClick={handleRemove}
+              disabled={removing}
+            >
+              {removing ? "Removing..." : "Remove Client"}
+            </button>
+          </div>
         </div>
 
         <div className="client-details__meta-grid">

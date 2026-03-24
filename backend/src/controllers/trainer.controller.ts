@@ -150,6 +150,40 @@ export const getClientProgressHistory = async (
   }
 };
 
+export const exploreClients = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const clients = await trainerService.exploreClients(req.user.id);
+    res.json(clients);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const removeClient = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    await trainerService.removeClient(req.user.id, req.params.clientLinkId);
+    res.status(204).send();
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const updateTrainerProfile = async (
   req: AuthRequest,
   res: Response,

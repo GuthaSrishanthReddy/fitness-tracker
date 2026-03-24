@@ -5,10 +5,13 @@ import type {
   TrainerProfile,
   TrainerRequestItem
 } from "../types/trainer.types";
-import type { ClientListItem, ClientProgressDetails } from "../types/client.types";
+import type { ClientListItem, ClientProgressDetails, ExploreClientItem } from "../types/client.types";
 
 export const fetchExploreClients = () =>
-  api<ClientListItem[]>("/trainer/explore-clients");
+  api<ExploreClientItem[]>("/trainers/explore-clients");
+
+export const removeClient = (clientLinkId: string) =>
+  api(`/trainers/clients/${clientLinkId}`, { method: "DELETE" });
 
 export const fetchMyClients = () =>
   api<ClientListItem[]>("/trainers/clients");

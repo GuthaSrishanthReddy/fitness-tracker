@@ -27,6 +27,9 @@ const badRequestError = (message: string) => {
 export const trainerService = {
   async exploreTrainers() {
     return prisma.trainer.findMany({
+      where: {
+        clients: { none: {} }
+      },
       include: {
         user: {
           select: { id: true, name: true, email: true }
@@ -338,6 +341,53 @@ export const trainerService = {
         }
       }
     });
+  },
+
+  async exploreClients(trainerUserId: string) {
+    const trainer = await prisma.trainer.findUnique({
+      where: { userId: trainerUserId },
+      select: { id: true }
+    });
+
+    if (!trainer) {
+      throw notFoundError("Trainer profile not found");
+    }
+
+    return prisma.user.findMany({
+      where: {
+        role: "USER",
+        clientLinks: { none: {} }
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        fitnessGoal: true,
+        fitnessLevel: true,
+        activityType: true
+      }
+    });
+  },
+
+  async removeClient(trainerUserId: string, clientLinkId: string) {
+    const trainer = await prisma.trainer.findUnique({
+      where: { userId: trainerUserId },
+      select: { id: true }
+    });
+
+    if (!trainer) {
+      throw notFoundError("Trainer profile not found");
+    }
+
+    const assignment = await prisma.clientTrainer.findFirst({
+      where: { id: clientLinkId, trainerId: trainer.id }
+    });
+
+    if (!assignment) {
+      throw notFoundError("Client relationship not found");
+    }
+
+    await prisma.clientTrainer.delete({ where: { id: clientLinkId } });
   },
 
   async getClientProgressHistory(trainerUserId: string, clientLinkId: string) {

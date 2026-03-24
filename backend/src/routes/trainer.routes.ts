@@ -2,12 +2,14 @@ import { Router } from "express";
 
 import {
   createTrainerRequest,
+  exploreClients,
   exploreTrainers,
   getClientProgressHistory,
   getMyClients,
   getTrainerById,
   getTrainerProfile,
   getTrainerRequests,
+  removeClient,
   respondToTrainerRequest,
   updateTrainerProfile
 } from "../controllers/trainer.controller";
@@ -34,10 +36,24 @@ router.put(
 );
 
 router.get(
+  "/explore-clients",
+  authMiddleware,
+  roleMiddleware("TRAINER"),
+  exploreClients
+);
+
+router.get(
   "/clients",
   authMiddleware,
   roleMiddleware("TRAINER"),
   getMyClients
+);
+
+router.delete(
+  "/clients/:clientLinkId",
+  authMiddleware,
+  roleMiddleware("TRAINER"),
+  removeClient
 );
 
 router.get(

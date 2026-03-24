@@ -1,3 +1,12 @@
+export interface ExploreClientItem {
+  id: string;
+  name: string;
+  email: string;
+  fitnessGoal?: string | null;
+  fitnessLevel?: string | null;
+  activityType?: string | null;
+}
+
 export interface ClientListItem {
   id: string;          // ClientTrainer.id
   user: {

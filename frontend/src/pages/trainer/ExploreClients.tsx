@@ -1,42 +1,48 @@
+import { useEffect, useState } from "react";
+import { fetchExploreClients } from "../../services/trainer.service";
+import type { ExploreClientItem } from "../../types/client.types";
 import "./ExploreClients.css";
 
-const dummyClients = [
-  {
-    id: "1",
-    name: "Rahul Sharma",
-    goal: "Weight Loss",
-    level: "Beginner",
-  },
-  {
-    id: "2",
-    name: "Ananya Verma",
-    goal: "Muscle Gain",
-    level: "Intermediate",
-  },
-  {
-    id: "3",
-    name: "Karthik Reddy",
-    goal: "Maintenance",
-    level: "Advanced",
-  },
-];
-
 const ExploreClients = () => {
+  const [clients, setClients] = useState<ExploreClientItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      try {
+        const data = await fetchExploreClients();
+        if (active) setClients(data);
+      } catch (err: any) {
+        if (active) setError(err.message || "Failed to load clients");
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    load();
+    return () => { active = false; };
+  }, []);
+
   return (
     <div className="explore-clients">
       <h2>Explore Clients</h2>
       <p>Find users looking for personal training</p>
 
       <div className="explore-clients__grid">
-        {dummyClients.map((client) => (
+        {loading && <p>Loading clients...</p>}
+        {!loading && error && <p>{error}</p>}
+        {!loading && !error && clients.length === 0 && (
+          <p>No available clients found.</p>
+        )}
+        {!loading && !error && clients.map((client) => (
           <div key={client.id} className="client-card">
             <h3>{client.name}</h3>
-            <p><strong>Goal:</strong> {client.goal}</p>
-            <p><strong>Level:</strong> {client.level}</p>
-
-            <button className="primary-btn" disabled>
-              Accept Client (coming soon)
-            </button>
+            <p>{client.email}</p>
+            {client.fitnessGoal && <p><strong>Goal:</strong> {client.fitnessGoal}</p>}
+            {client.fitnessLevel && <p><strong>Level:</strong> {client.fitnessLevel}</p>}
+            {client.activityType && <p><strong>Activity:</strong> {client.activityType}</p>}
           </div>
         ))}
       </div>
