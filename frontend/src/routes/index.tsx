@@ -13,6 +13,7 @@ import Signup from "../pages/public/Signup";
 
 /* User */
 import UpdateProgress from "../pages/user/UpdateProgress";
+import MyProgress from "../pages/user/MyProgress";
 import MyPlan from "../pages/user/MyPlan";
 import MyTrainer from "../pages/user/MyTrainer";
 import ExploreTrainers from "../pages/user/ExploreTrainers";
@@ -74,7 +75,8 @@ const AppRoutes = () => {
         }
       >
         <Route path="plan" element={<MyPlan />} />
-        <Route path="progress" element={<UpdateProgress />} />
+        <Route path="progress" element={<MyProgress />} />
+        <Route path="progress/update" element={<UpdateProgress />} />
         <Route path="my-trainer" element={<MyTrainer />} />
         <Route path="explore-trainers" element={<ExploreTrainers />} />
         <Route path="trainers/:trainerId" element={<TrainerDetails />} />

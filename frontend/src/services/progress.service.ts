@@ -1,5 +1,5 @@
 import { api } from "./api";
-import type { ProgressInput, ProgressRecord } from "../types/progress.types";
+import type { ProgressInput, ProgressRecord, InsightResponse } from "../types/progress.types";
 
 export const fetchProgress = () =>
   api<ProgressRecord[]>("/progress");
@@ -9,3 +9,6 @@ export const submitProgress = (data: ProgressInput) =>
     method: "POST",
     body: JSON.stringify(data),
   });
+
+export const fetchProgressInsights = () =>
+  api<InsightResponse>("/ai/analyze-progress", { method: "POST" });
