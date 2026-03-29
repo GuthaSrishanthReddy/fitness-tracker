@@ -96,10 +96,6 @@ model Plan {
   goal           FitnessGoal
   activity       ActivityType
   level          FitnessLevel
-  calories       Int
-  protein        Int
-  carbs          Int
-  fats           Int
   workoutPlan    String
   meditationPlan String?
   supplementPlan String?

@@ -3,7 +3,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { env } from "../config/env";
 
 const genai = new GoogleGenerativeAI(env.GOOGLE_API_KEY);
-const insightModel = genai.getGenerativeModel({ model: "models/gemini-2.0-flash" });
+const insightModel = genai.getGenerativeModel({ model: "models/gemini-2.5-flash" });
 
 export const insightService = {
   async analyzeProgress(userId: string) {
@@ -40,6 +40,7 @@ export const insightService = {
 You are a fitness AI. Analyze the user progress data below and return a single JSON object.
 
 STRICT RULES:
+- Be brutally honest in your analysis.
 - Return ONLY the JSON object, nothing else
 - No markdown, no code blocks, no explanation
 - All string fields must use EXACTLY one of the allowed values listed
