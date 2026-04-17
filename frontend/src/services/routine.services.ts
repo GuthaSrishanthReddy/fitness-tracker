@@ -29,6 +29,47 @@ export type SupplementItem = {
   notes: string;
 };
 
+export type RecipeResult = {
+  id: number;
+  image: string;
+  imageType: string;
+  title: string;
+  readyInMinutes: number;
+  servings: number;
+  sourceUrl: string;
+  spoonacularSourceUrl: string;
+  aggregateLikes: number;
+  healthScore: number;
+  spoonacularScore: number;
+  pricePerServing: number;
+  weightWatcherSmartPoints: number;
+  cheap: boolean;
+  veryHealthy: boolean;
+  veryPopular: boolean;
+  sustainable: boolean;
+  vegetarian: boolean;
+  vegan: boolean;
+  glutenFree: boolean;
+  dairyFree: boolean;
+  lowFodmap: boolean;
+  cuisines: string[];
+  dishTypes: string[];
+  diets: string[];
+  occasions: string[];
+  summary: string;
+  instructions: string;
+  analyzedInstructions: unknown[];
+  extendedIngredients: Array<{
+    id?: number;
+    name?: string;
+    original?: string;
+    amount?: number;
+    unit?: string;
+  }>;
+  nutrition: unknown | null;
+  winePairing: unknown | null;
+};
+
 export const generateAiPlan = () =>
   api<GeneratePlanResponse>("/plans/ai", {
     method: "POST",
@@ -56,5 +97,10 @@ export const generateAiSupplements = () =>
 
 export const fetchLatestAiSupplements = () =>
   api<SupplementItem[]>("/supplements/ai/latest", {
+    cache: "no-store",
+  });
+
+export const fetchMealRecipes = (meal: string) =>
+  api<RecipeResult[]>(`/diet/recipe?meal=${encodeURIComponent(meal)}`, {
     cache: "no-store",
   });

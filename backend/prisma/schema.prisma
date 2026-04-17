@@ -96,6 +96,10 @@ model Plan {
   goal           FitnessGoal
   activity       ActivityType
   level          FitnessLevel
+  calories       Int  @default(2000)
+  protein        Int  @default(150)
+  carbs          Int  @default(250)
+  fats           Int  @default(70)
   workoutPlan    String
   meditationPlan String?
   supplementPlan String?

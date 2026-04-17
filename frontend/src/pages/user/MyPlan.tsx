@@ -4,6 +4,7 @@ import {
   fetchLatestAiDiet,
   fetchLatestAiPlan,
   fetchLatestAiSupplements,
+  generateAiDiet,
   generateAiPlan,
 } from "../../services/routine.services";
 import type {
@@ -21,6 +22,7 @@ const MyPlan = () => {
   const [planLoading, setPlanLoading] = useState(true);
   const [planGenerating, setPlanGenerating] = useState(false);
   const [dietLoading, setDietLoading] = useState(true);
+  const [dietGenerating, setDietGenerating] = useState(false);
   const [supplementLoading, setSupplementLoading] = useState(true);
   const [planError, setPlanError] = useState("");
   const [planBanner, setPlanBanner] = useState("");
@@ -92,6 +94,26 @@ const MyPlan = () => {
     }
   };
 
+  const handleGenerateDiet = async () => {
+    setDietError("");
+    setDietGenerating(true);
+    try {
+      const result = await generateAiDiet();
+      setDiet(result);
+      if (result.length === 0) {
+        setDietError("Generated meals were empty. Try again.");
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : "Failed to generate meals";
+      setDietError(message);
+    } finally {
+      setDietGenerating(false);
+    }
+  };
+
   return (
     <div className="my-plan">
       <h2>My Plan</h2>
@@ -108,7 +130,9 @@ const MyPlan = () => {
       <DietPlanSection
         loading={dietLoading}
         error={dietError}
+        generating={dietGenerating}
         diet={diet}
+        onGenerateDiet={handleGenerateDiet}
       />
       <section>
         <h3>Supplements</h3>

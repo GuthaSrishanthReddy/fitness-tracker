@@ -142,3 +142,146 @@
 .day-detail-table tbody tr:last-child td {
   border-bottom: none;
 }
+
+.meal-select-btn {
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: 600;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.meal-select-btn:hover {
+  color: var(--accent-cyan);
+}
+
+.recipe-modal {
+  width: min(760px, 90vw);
+  max-height: 80vh;
+  overflow-y: auto;
+  color: #111;
+}
+
+.recipe-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.recipe-modal-header h4 {
+  margin: 0;
+}
+
+.recipe-close-btn {
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #111;
+  font: inherit;
+  border-radius: 0.45rem;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+}
+
+.recipe-content h5 {
+  margin: 0.9rem 0 0.6rem;
+  font-size: 1.1rem;
+}
+
+.recipe-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.9rem;
+}
+
+.recipe-tab {
+  border: 1px solid #d1d5db;
+  background: #f7fafc;
+  color: #111;
+  font: inherit;
+  border-radius: 999px;
+  padding: 0.3rem 0.8rem;
+  cursor: pointer;
+}
+
+.recipe-tab--active {
+  background: #e6fffa;
+  border-color: #25c2c7;
+  color: #0f766e;
+}
+
+.recipe-hero-image {
+  width: 100%;
+  border-radius: 0.6rem;
+  margin-bottom: 0.6rem;
+  object-fit: cover;
+  max-height: 260px;
+}
+
+.recipe-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.7rem;
+}
+
+.recipe-metrics span,
+.recipe-flags span {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  line-height: 1;
+  padding: 0.38rem 0.62rem;
+}
+
+.recipe-metrics span {
+  background: #eef2ff;
+  color: #3730a3;
+}
+
+.recipe-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 0.75rem;
+}
+
+.recipe-flags span {
+  background: #ecfdf5;
+  color: #065f46;
+}
+
+.recipe-ingredients-list {
+  margin: 0.45rem 0 0;
+  padding-left: 1.2rem;
+}
+
+.recipe-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin-top: 0.9rem;
+}
+
+.recipe-links a {
+  color: #0f766e;
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .recipe-modal {
+    width: min(94vw, 94vw);
+    max-height: 86vh;
+  }
+
+  .recipe-modal-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

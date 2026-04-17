@@ -1,152 +1,318 @@
+import crypto from "crypto";
 import { prisma } from "../config/db";
 import { createEmbedding } from "./embedding.service";
-import { model } from "./model.service";
 import { embeddingStoreService } from "./embeddingStore.service";
-import crypto from "crypto";
+import { model } from "./model.service";
+import { getMealRecipes, getMeals } from "./recipe.service";
+import { mealsTemplate } from "../utils/constants";
 import { retrieveContextBySources } from "./rag.retrieve";
 
-export const aiDietService = {
-  parseDietItems(raw: string) {
-    const normalize = (text: string) =>
-      text
-        .replace(/[“”]/g, "\"")
-        .replace(/[‘’]/g, "'")
-        .replace(/^\s*json\s*/i, "")
-        .trim();
+type MealQueryArgs = {
+  meal: string;
+  maxFat: number;
+  minProtein: number;
+  maxProtein: number;
+};
 
-    const extractJson = (text: string) => {
-      const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
-      const unfenced = fenceMatch ? fenceMatch[1] : text;
-      const cleaned = normalize(
-        unfenced.replace(/^```(?:json)?/i, "").replace(/```$/i, "")
-      );
-      const firstArray = cleaned.indexOf("[");
-      const firstObj = cleaned.indexOf("{");
-      const start =
-        firstArray === -1
-          ? firstObj
-          : firstObj === -1
-          ? firstArray
-          : Math.min(firstArray, firstObj);
-      if (start === -1) return cleaned;
-      const lastArray = cleaned.lastIndexOf("]");
-      const lastObj = cleaned.lastIndexOf("}");
-      const end =
-        lastArray === -1
-          ? lastObj
-          : lastObj === -1
-          ? lastArray
-          : Math.max(lastArray, lastObj);
-      return end >= start
-        ? cleaned.slice(start, end + 1).trim()
-        : cleaned.slice(start).trim();
-    };
+type DietItem = {
+  meal: string;
+  items: string;
+  notes: string;
+};
 
-    const jsonText = extractJson(raw);
-    let dietItems: Array<{ meal: string; items: string; notes: string }> = [];
+const MAX_MEAL_QUERIES = 6;
+
+const DEFAULT_MEAL_QUERIES: MealQueryArgs[] = mealsTemplate.map((template) => ({
+  meal: template.mealName,
+  maxFat: template.maxFat,
+  minProtein: template.minProtein,
+  maxProtein: template.maxProtein,
+}));
+
+const normalize = (text: string) =>
+  text
+    .replace(/[â€œâ€]/g, "\"")
+    .replace(/[â€˜â€™]/g, "'")
+    .replace(/^\s*json\s*/i, "")
+    .trim();
+
+const extractJson = (text: string) => {
+  const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  const unfenced = fenceMatch ? fenceMatch[1] : text;
+  const cleaned = normalize(
+    unfenced.replace(/^```(?:json)?/i, "").replace(/```$/i, "")
+  );
+  const firstArray = cleaned.indexOf("[");
+  const firstObj = cleaned.indexOf("{");
+  const start =
+    firstArray === -1
+      ? firstObj
+      : firstObj === -1
+      ? firstArray
+      : Math.min(firstArray, firstObj);
+  if (start === -1) return cleaned;
+
+  const lastArray = cleaned.lastIndexOf("]");
+  const lastObj = cleaned.lastIndexOf("}");
+  const end =
+    lastArray === -1
+      ? lastObj
+      : lastObj === -1
+      ? lastArray
+      : Math.max(lastArray, lastObj);
+  return end >= start
+    ? cleaned.slice(start, end + 1).trim()
+    : cleaned.slice(start).trim();
+};
+
+const toFiniteNumber = (value: unknown, fallback: number) => {
+  const num = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(num) ? num : fallback;
+};
+
+const toMealQuery = (value: unknown): MealQueryArgs | null => {
+  if (!value || typeof value !== "object") return null;
+  const candidate = value as Record<string, unknown>;
+
+  const meal = String(
+    candidate.meal ?? candidate.mealName ?? candidate.query ?? ""
+  ).trim();
+  if (!meal) return null;
+
+  const maxFat = Math.max(0, toFiniteNumber(candidate.maxFat, 25));
+  const minProtein = Math.max(0, toFiniteNumber(candidate.minProtein, 15));
+  const maxProtein = Math.max(
+    minProtein,
+    toFiniteNumber(candidate.maxProtein, minProtein + 10)
+  );
+
+  return { meal, maxFat, minProtein, maxProtein };
+};
+
+const parseMealQueries = (raw: string): MealQueryArgs[] => {
+  const jsonText = extractJson(raw);
+  const parsedCandidates = (() => {
     try {
       const parsed = JSON.parse(jsonText);
-      dietItems = Array.isArray(parsed) ? parsed : [parsed];
+      return Array.isArray(parsed) ? parsed : [parsed];
     } catch {
-      let repaired = jsonText;
-      if (repaired.startsWith("[") && !repaired.endsWith("]")) repaired += "]";
-      if (repaired.startsWith("{") && !repaired.endsWith("}")) repaired += "}";
-
-      try {
-        const parsed = JSON.parse(repaired);
-        dietItems = Array.isArray(parsed) ? parsed : [parsed];
-      } catch {
-        const cleaned = normalize(raw);
-        const items: Array<{ meal: string; items: string; notes: string }> = [];
-        const itemRegex =
-          /"meal"\s*:\s*"([^"]+)"[\s\S]*?"items"\s*:\s*"([^"]*)"[\s\S]*?"notes"\s*:\s*"([^"]*)"/gi;
-        let match: RegExpExecArray | null;
-        while ((match = itemRegex.exec(cleaned)) !== null) {
-          items.push({
-            meal: match[1],
-            items: match[2],
-            notes: match[3],
-          });
-        }
-        dietItems = items;
-      }
+      return [];
     }
-    return dietItems;
-  },
+  })();
 
-  async getLatestDiet(userId: string) {
-    const latest = await embeddingStoreService.getLatestBySource(userId, "diet");
+  const normalized = parsedCandidates
+    .map(toMealQuery)
+    .filter((item): item is MealQueryArgs => Boolean(item));
 
-    if (!latest) return [];
-    return aiDietService.parseDietItems(latest.content);
-  },
+  if (normalized.length === 0) return [];
 
-  async generateDiet(userId: string) {
+  const seen = new Set<string>();
+  const deduped: MealQueryArgs[] = [];
+  for (const item of normalized) {
+    const key = item.meal.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(item);
+  }
+
+  return deduped.slice(0, MAX_MEAL_QUERIES);
+};
+
+const ensureAllMealSlots = (queries: MealQueryArgs[]): MealQueryArgs[] => {
+  const byMeal = new Map<string, MealQueryArgs>();
+  for (const query of queries) {
+    byMeal.set(query.meal.trim().toLowerCase(), query);
+  }
+
+  // Always return all template meals in template order so UI consistently shows all slots.
+  return DEFAULT_MEAL_QUERIES.map((fallback) => {
+    const existing = byMeal.get(fallback.meal.trim().toLowerCase());
+    if (!existing) return fallback;
+
+    const minProtein = Math.max(0, existing.minProtein);
+    const maxProtein = Math.max(minProtein, existing.maxProtein);
+    const maxFat = Math.max(0, existing.maxFat);
+
+    return {
+      meal: fallback.meal,
+      minProtein,
+      maxProtein,
+      maxFat,
+    };
+  });
+};
+
+const parseDietItems = (raw: string): DietItem[] => {
+  const jsonText = extractJson(raw);
+
+  try {
+    const parsed = JSON.parse(jsonText);
+    const items = Array.isArray(parsed) ? parsed : [parsed];
+    return items
+      .filter((item) => item && typeof item === "object")
+      .map((item) => {
+        const candidate = item as Record<string, unknown>;
+        return {
+          meal: String(candidate.meal ?? "").trim(),
+          items: String(candidate.items ?? "").trim(),
+          notes: String(candidate.notes ?? "").trim(),
+        };
+      })
+      .filter((item) => item.meal.length > 0);
+  } catch {
+    return [];
+  }
+};
+
+const formatMacroNote = (query: MealQueryArgs) =>
+  `Target: min protein ${query.minProtein}g, max protein ${query.maxProtein}g, max fat ${query.maxFat}g`;
+
+const fetchRecipesWithFallback = async (query: MealQueryArgs) => {
+  const strictRecipes = await getMeals(
+    query.meal,
+    query.maxFat,
+    query.minProtein,
+    query.maxProtein
+  );
+  if (strictRecipes.length > 0) {
+    return {
+      recipes: strictRecipes,
+      usedFallback: false,
+    };
+  }
+
+  const relaxedRecipes = await getMealRecipes(query.meal);
+  return {
+    recipes: relaxedRecipes,
+    usedFallback: relaxedRecipes.length > 0,
+  };
+};
+
+const generateMealQueriesFromAi = async (context: string): Promise<MealQueryArgs[]> => {
+  const prompt = `
+You are a nutrition assistant.
+Return ONLY valid JSON array, no markdown, no explanation.
+
+Generate meal queries to pass into a recipe service.
+Each object must match this exact shape:
+{ "meal": "string", "maxFat": number, "minProtein": number, "maxProtein": number }
+
+Rules:
+- Provide 4 to 6 meals for one day.
+- Keep values realistic for one meal.
+- maxFat must be >= 0.
+- minProtein must be >= 0.
+- maxProtein must be >= minProtein.
+
+Use this template as reference:
+${JSON.stringify(DEFAULT_MEAL_QUERIES)}
+
+User context:
+${context || "none"}
+`;
+
+  const result = await model.generateContent(prompt);
+  const raw = result.response.text().trim();
+  console.log("RAW_DIET_MEAL_QUERY_RESPONSE:", raw);
+
+  let mealQueries = parseMealQueries(raw);
+  if (mealQueries.length > 0) return mealQueries;
+
+  const retryPrompt = `
+Return ONLY valid JSON array in this exact shape:
+[
+  { "meal": "Breakfast", "maxFat": 20, "minProtein": 15, "maxProtein": 25 }
+]
+No prose. No markdown.`;
+  const retry = await model.generateContent(retryPrompt);
+  const retryRaw = retry.response.text().trim();
+  console.log("RAW_DIET_MEAL_QUERY_RETRY:", retryRaw);
+
+  mealQueries = parseMealQueries(retryRaw);
+  return mealQueries.length > 0 ? mealQueries : DEFAULT_MEAL_QUERIES;
+};
+
+const buildDietItemsFromQueries = async (queries: MealQueryArgs[]): Promise<DietItem[]> => {
+  const dietItems: DietItem[] = [];
+
+  for (const query of queries) {
+    try {
+      const { recipes, usedFallback } = await fetchRecipesWithFallback(query);
+
+      if (recipes.length === 0) {
+        dietItems.push({
+          meal: query.meal,
+          items: "No matching recipes found",
+          notes: formatMacroNote(query),
+        });
+        continue;
+      }
+
+      const titles = recipes.slice(0, 3).map((recipe) => recipe.title).filter(Boolean);
+      dietItems.push({
+        meal: query.meal,
+        items: titles.join(", "),
+        notes: usedFallback
+          ? `${formatMacroNote(query)} (showing closest available matches)`
+          : formatMacroNote(query),
+      });
+    } catch (error) {
+      console.error(`Diet recipe fetch failed for meal "${query.meal}"`, error);
+      dietItems.push({
+        meal: query.meal,
+        items: "Unable to fetch recipes right now",
+        notes: formatMacroNote(query),
+      });
+    }
+  }
+
+  return dietItems;
+};
+
+const persistDietItems = async (userId: string, items: DietItem[]) => {
+  const dietText = JSON.stringify(items);
+  const hasDietEmbedding = await embeddingStoreService.hasExactContent(
+    userId,
+    "diet",
+    dietText
+  );
+  if (hasDietEmbedding) return;
+
+  const embedding = await createEmbedding(dietText);
+  await prisma.$executeRaw`
+    INSERT INTO "DocumentEmbedding"
+      (id, "userId", source, content, embedding)
+    VALUES
+      (${crypto.randomUUID()}, ${userId}, 'diet', ${dietText}, ${embedding}::vector)
+  `;
+};
+
+export const aiDietService = {
+  parseDietItems,
+
+  async generateDiet(userId: string): Promise<DietItem[]> {
     const retrievedContext = await retrieveContextBySources(
       userId,
-      "Generate a concise nutrition plan from progress and workout plan data.",
+      "Generate meal targets for recipe search based on latest progress and fitness goal.",
       ["progress", "plan"],
       8,
       3000
     );
 
-    const prompt = `
-You are a helpful fitness nutrition assistant.
-Use the user's progress history and workout plan history to generate a concise meal plan.
+    const aiMealQueries = await generateMealQueriesFromAi(retrievedContext);
+    const mealQueries = ensureAllMealSlots(aiMealQueries);
+    const dietItems = await buildDietItemsFromQueries(mealQueries);
 
-Return ONLY valid JSON in this exact shape:
-[
-  { "meal": "Breakfast", "items": "Oats, eggs, banana", "notes": "High protein" }
-]
-
-Retrieved user context:
-${retrievedContext || "none"}
-Generate a meal plan based on the above information.`;
-
-    const result = await model.generateContent(prompt);
-    const raw = result.response.text().trim();
-    console.log("RAW_DIET_RESPONSE:", raw);
-
-    let dietItems = aiDietService.parseDietItems(raw);
-    if (dietItems.length === 0) {
-      const retryPrompt = `
-Return ONLY valid JSON (no code fences, no extra text) in this exact shape:
-[
-  { "meal": "Breakfast", "items": "Oats, eggs, banana", "notes": "High protein" }
-]
-
-If you cannot use the history, return a generic 1-day meal plan with 4 items.
-`;
-      const retry = await model.generateContent(retryPrompt);
-      const retryRaw = retry.response.text().trim();
-      console.log("RAW_DIET_RESPONSE_RETRY:", retryRaw);
-      dietItems = aiDietService.parseDietItems(retryRaw);
-    }
-
-    const dietText = JSON.stringify(dietItems);
-    const hasDietEmbedding = await embeddingStoreService.hasExactContent(
-      userId,
-      "diet",
-      dietText
-    );
-    if (!hasDietEmbedding) {
-      const dietEmbedding = await createEmbedding(dietText);
-      await prisma.$executeRaw`
-        INSERT INTO "DocumentEmbedding"
-          (id, "userId", source, content, embedding)
-        VALUES
-          (${crypto.randomUUID()}, ${userId}, 'diet', ${dietText}, ${dietEmbedding}::vector)
-      `;
+    if (dietItems.length > 0) {
+      await persistDietItems(userId, dietItems);
     }
 
     return dietItems;
   },
-};
 
-export const getDietEmbeddings = async (userId: string) => {
-  return embeddingStoreService.getBySource(userId, "diet", "asc");
-};
-
-export const getRoutineEmbeddings = async (userId: string) => {
-  return embeddingStoreService.getBySource(userId, "plan", "asc");
+  async getLatestDiet(userId: string): Promise<DietItem[]> {
+    const latest = await embeddingStoreService.getLatestBySource(userId, "diet");
+    if (!latest) return [];
+    return parseDietItems(latest.content);
+  },
 };

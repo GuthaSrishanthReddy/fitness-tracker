@@ -8,6 +8,14 @@ export const PROGRESS_RULES = {
   MIN_GAP_DAYS: 10
 };
 
+
+export const PLAN_CONTEXT_TOP_K = 5;
+export const PLAN_CONTEXT_MAX_CHARS = 900;
+export const WEEK_DAYS = [
+  "Monday", "Tuesday", "Wednesday", "Thursday",
+  "Friday", "Saturday", "Sunday",
+] as const;
+
 export const AI_LIMITS = {
   MAX_CONTEXT_ENTRIES: 5
 };
@@ -78,5 +86,63 @@ export const planTemplate =
     "day": "Sunday",
     "focus": "Rest",
     "workouts": []
+  }
+];
+
+export const mealsTemplate = 
+[
+  {
+    "mealName": "Breakfast",
+    "minCarbs": 40,
+    "maxCarbs": 60,
+    "minProtein": 15,
+    "maxProtein": 20,
+    "minFat": 10,
+    "maxFat": 20
+  },
+  {
+    "mealName": "Mid-Morning Snack",
+    "minCarbs": 20,
+    "maxCarbs": 35,
+    "minProtein": 8,
+    "maxProtein": 12,
+    "minFat": 5,
+    "maxFat": 10
+  },
+  {
+    "mealName": "Lunch",
+    "minCarbs": 50,
+    "maxCarbs": 70,
+    "minProtein": 18,
+    "maxProtein": 22,
+    "minFat": 10,
+    "maxFat": 20
+  },
+  {
+    "mealName": "Pre-Workout",
+    "minCarbs": 30,
+    "maxCarbs": 50,
+    "minProtein": 5,
+    "maxProtein": 10,
+    "minFat": 0,
+    "maxFat": 8
+  },
+  {
+    "mealName": "Post-Workout",
+    "minCarbs": 40,
+    "maxCarbs": 60,
+    "minProtein": 15,
+    "maxProtein": 20,
+    "minFat": 0,
+    "maxFat": 8
+  },
+  {
+    "mealName": "Dinner",
+    "minCarbs": 30,
+    "maxCarbs": 50,
+    "minProtein": 12,
+    "maxProtein": 18,
+    "minFat": 10,
+    "maxFat": 20
   }
 ];
