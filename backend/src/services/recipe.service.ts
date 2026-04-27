@@ -12,6 +12,12 @@ const MAX_RETRIES = 2;
 const BASE_RETRY_DELAY_MS = 350;
 
 type ServiceError = Error & { statusCode?: number; retryAfter?: number };
+type MealSearchArgs = {
+  meal: string;
+  maxFat: number;
+  minProtein: number;
+  maxProtein: number;
+};
 
 const createServiceError = (
   message: string,
@@ -189,71 +195,127 @@ const mapRecipe = (recipe: SpoonacularRecipe): RecipeResult => ({
   winePairing: recipe.winePairing ?? null,
 });
 
-export const getMeals = async (
-  meal: string,
-  maxFat: number,
-  minProtein: number,
-  maxProtein: number
-): Promise<RecipeResult[]> => {
+const normalizeMealLabel = (meal: string) =>
+  meal.toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+
+const getRecipeSearchQueries = (meal: string): string[] => {
+  const normalized = normalizeMealLabel(meal);
+  if (!normalized) return [meal];
+
+  const aliases: Array<[RegExp, string[]]> = [
+    [/^breakfast$/, ["high protein breakfast", "healthy breakfast"]],
+    [
+      /^mid morning snack$|^snack$/,
+      ["healthy high protein snack", "healthy snack"],
+    ],
+    [
+      /^pre workout$/,
+      ["pre workout snack", "energy snack", "light healthy snack"],
+    ],
+    [
+      /^post workout$/,
+      [
+        "post workout high protein meal",
+        "high protein recovery meal",
+        "high protein snack",
+      ],
+    ],
+    [/^lunch$/, ["high protein lunch", "healthy lunch"]],
+    [/^dinner$/, ["high protein dinner", "healthy dinner"]],
+  ];
+
+  for (const [pattern, aliasList] of aliases) {
+    if (pattern.test(normalized)) {
+      return [...new Set([...aliasList, meal])];
+    }
+  }
+
+  return [meal];
+};
+
+export const getMeals = async ({
+  meal,
+  maxFat,
+  minProtein,
+  maxProtein,
+}: MealSearchArgs): Promise<RecipeResult[]> => {
   validateInputs(meal, maxFat, minProtein, maxProtein);
   const trimmedMeal = meal.trim();
-
-  const params = {
-    query: trimmedMeal,
-    maxFat,
-    minProtein,
-    maxProtein,
-    addRecipeInformation: true,
-    number: 5,
-  };
+  const searchQueries = getRecipeSearchQueries(trimmedMeal);
 
   const headers = {
     "x-api-key": env.SPOONACULAR_API_KEY,
   };
 
-  let response: AxiosResponse<SpoonacularComplexSearchResponse> | null = null;
+  const fetchForQuery = async (
+    query: string
+  ): Promise<SpoonacularComplexSearchResponse | null> => {
+    const params = {
+      query,
+      maxFat,
+      minProtein,
+      maxProtein,
+      addRecipeInformation: true,
+      number: 5,
+    };
 
-  for (let attempt = 0; attempt <= MAX_RETRIES; attempt += 1) {
-    try {
-      response = await axios.get<SpoonacularComplexSearchResponse>(
-        SPOONACULAR_URL,
-        {
-          headers,
-          params,
-          timeout: REQUEST_TIMEOUT_MS,
+    let response: AxiosResponse<SpoonacularComplexSearchResponse> | null = null;
+
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt += 1) {
+      try {
+        response = await axios.get<SpoonacularComplexSearchResponse>(
+          SPOONACULAR_URL,
+          {
+            headers,
+            params,
+            timeout: REQUEST_TIMEOUT_MS,
+          }
+        );
+        break;
+      } catch (error) {
+        const canRetry = isRetryableSpoonacularError(error) && attempt < MAX_RETRIES;
+        if (!canRetry) {
+          throw normalizeSpoonacularError(error);
         }
-      );
-      break;
-    } catch (error) {
-      const canRetry = isRetryableSpoonacularError(error) && attempt < MAX_RETRIES;
-      if (!canRetry) {
-        throw normalizeSpoonacularError(error);
+        const delay = BASE_RETRY_DELAY_MS * 2 ** attempt;
+        await wait(delay);
       }
-      const delay = BASE_RETRY_DELAY_MS * 2 ** attempt;
-      await wait(delay);
     }
+
+    return response?.data ?? null;
+  };
+
+  for (const searchQuery of searchQueries) {
+    const payload = await fetchForQuery(searchQuery);
+    if (!payload) {
+      throw createServiceError("Unable to fetch recipes right now.", 503);
+    }
+
+    const rawResults = Array.isArray(payload.results) ? payload.results : [];
+    if (rawResults.length === 0) {
+      continue;
+    }
+
+    const recipes = rawResults.map(mapRecipe);
+    if (env.NODE_ENV !== "production") {
+      console.log("Spoonacular recipes fetched:", {
+        inputMeal: trimmedMeal,
+        query: searchQuery,
+        count: recipes.length,
+      });
+    }
+
+    return recipes;
   }
 
-  if (!response) {
-    throw createServiceError("Unable to fetch recipes right now.", 503);
-  }
-
-  const rawResults = Array.isArray(response.data.results)
-    ? response.data.results
-    : [];
-  if (rawResults.length === 0) {
-    return [];
-  }
-
-  const recipes = rawResults.map(mapRecipe);
   if (env.NODE_ENV !== "production") {
-    console.log("Spoonacular recipes fetched:", {
-      query: trimmedMeal,
-      count: recipes.length,
+    console.log("Spoonacular recipes fetched none:", {
+      inputMeal: trimmedMeal,
+      attemptedQueries: searchQueries,
     });
   }
 
-  return recipes;
+  return [];
 };
 
 export const getMealRecipes = async (meal: string): Promise<RecipeResult[]> => {
@@ -261,10 +323,10 @@ export const getMealRecipes = async (meal: string): Promise<RecipeResult[]> => {
   const DEFAULT_MIN_PROTEIN = 0;
   const DEFAULT_MAX_PROTEIN = 250;
 
-  return getMeals(
+  return getMeals({
     meal,
-    DEFAULT_MAX_FAT,
-    DEFAULT_MIN_PROTEIN,
-    DEFAULT_MAX_PROTEIN
-  );
+    maxFat: DEFAULT_MAX_FAT,
+    minProtein: DEFAULT_MIN_PROTEIN,
+    maxProtein: DEFAULT_MAX_PROTEIN,
+  });
 };

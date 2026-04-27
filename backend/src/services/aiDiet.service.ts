@@ -168,12 +168,12 @@ const formatMacroNote = (query: MealQueryArgs) =>
   `Target: min protein ${query.minProtein}g, max protein ${query.maxProtein}g, max fat ${query.maxFat}g`;
 
 const fetchRecipesWithFallback = async (query: MealQueryArgs) => {
-  const strictRecipes = await getMeals(
-    query.meal,
-    query.maxFat,
-    query.minProtein,
-    query.maxProtein
-  );
+  const strictRecipes = await getMeals({
+    meal: query.meal,
+    maxFat: query.maxFat,
+    minProtein: query.minProtein,
+    maxProtein: query.maxProtein,
+  });
   if (strictRecipes.length > 0) {
     return {
       recipes: strictRecipes,
