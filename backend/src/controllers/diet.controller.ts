@@ -62,9 +62,13 @@ export const getMealRecipeDetails = async (
       return res.json(storedRecipes);
     }
 
-    const recipes = await getMealRecipes(meal, { requestMode: "interactive" });
-    await aiDietService.cacheMealRecipes(userId, meal, recipes);
-    res.json(recipes);
+    try {
+      const recipes = await getMealRecipes(meal, { requestMode: "interactive" });
+      await aiDietService.cacheMealRecipes(userId, meal, recipes);
+      return res.json(recipes);
+    } catch {
+      return res.status(502).json({ success: false, message: "Failed to fetch from spoonacular" });
+    }
   } catch (error) {
     next(error);
   }

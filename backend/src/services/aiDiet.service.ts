@@ -177,6 +177,9 @@ const formatMacroNote = (query: MealQueryArgs) =>
   `Target: min protein ${query.minProtein}g, max protein ${query.maxProtein}g, max fat ${query.maxFat}g`;
 
 const normalizeMealKey = (meal: string) => meal.trim().toLowerCase();
+const isDietRecipeCacheUnavailableError = (error: unknown) =>
+  error instanceof Prisma.PrismaClientKnownRequestError &&
+  (error.code === "P2021" || error.code === "P2022");
 
 const fetchRecipesWithFallback = async (query: MealQueryArgs) => {
   const strictRecipes = await getMeals({
@@ -412,23 +415,37 @@ export const aiDietService = {
     const mealKey = normalizeMealKey(meal);
     if (!mealKey) return null;
 
-    const record = await prisma.dietRecipeDetail.findUnique({
-      where: {
-        userId_mealKey: {
-          userId,
-          mealKey,
+    try {
+      const record = await prisma.dietRecipeDetail.findUnique({
+        where: {
+          userId_mealKey: {
+            userId,
+            mealKey,
+          },
         },
-      },
-      select: {
-        recipes: true,
-      },
-    });
+        select: {
+          recipes: true,
+        },
+      });
 
-    if (!record) return null;
-    return Array.isArray(record.recipes) ? (record.recipes as RecipeResult[]) : [];
+      if (!record) return null;
+      return Array.isArray(record.recipes) ? (record.recipes as RecipeResult[]) : [];
+    } catch (error) {
+      if (isDietRecipeCacheUnavailableError(error)) {
+        return null;
+      }
+      throw error;
+    }
   },
 
   async cacheMealRecipes(userId: string, meal: string, recipes: RecipeResult[]): Promise<void> {
-    await upsertMealRecipeDetails(userId, meal, recipes);
+    try {
+      await upsertMealRecipeDetails(userId, meal, recipes);
+    } catch (error) {
+      if (isDietRecipeCacheUnavailableError(error)) {
+        return;
+      }
+      throw error;
+    }
   },
 };
