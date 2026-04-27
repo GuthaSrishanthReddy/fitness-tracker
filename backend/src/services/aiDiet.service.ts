@@ -1,9 +1,11 @@
 import crypto from "crypto";
+import { Prisma } from "@prisma/client";
 import { prisma } from "../config/db";
 import { createEmbedding } from "./embedding.service";
 import { embeddingStoreService } from "./embeddingStore.service";
 import { model } from "./model.service";
 import { getMealRecipes, getMeals } from "./recipe.service";
+import { RecipeResult } from "../types/recipe.types";
 import { mealsTemplate } from "../utils/constants";
 import { retrieveContextBySources } from "./rag.retrieve";
 
@@ -18,6 +20,13 @@ type DietItem = {
   meal: string;
   items: string;
   notes: string;
+};
+
+type MealRecipePopupDetail = {
+  meal: string;
+  items: string;
+  notes: string;
+  recipes: RecipeResult[];
 };
 
 const MAX_MEAL_QUERIES = 6;
@@ -167,6 +176,8 @@ const parseDietItems = (raw: string): DietItem[] => {
 const formatMacroNote = (query: MealQueryArgs) =>
   `Target: min protein ${query.minProtein}g, max protein ${query.maxProtein}g, max fat ${query.maxFat}g`;
 
+const normalizeMealKey = (meal: string) => meal.trim().toLowerCase();
+
 const fetchRecipesWithFallback = async (query: MealQueryArgs) => {
   const strictRecipes = await getMeals({
     meal: query.meal,
@@ -181,7 +192,9 @@ const fetchRecipesWithFallback = async (query: MealQueryArgs) => {
     };
   }
 
-  const relaxedRecipes = await getMealRecipes(query.meal);
+  const relaxedRecipes = await getMealRecipes(query.meal, {
+    requestMode: "background",
+  });
   return {
     recipes: relaxedRecipes,
     usedFallback: relaxedRecipes.length > 0,
@@ -232,41 +245,62 @@ No prose. No markdown.`;
   return mealQueries.length > 0 ? mealQueries : DEFAULT_MEAL_QUERIES;
 };
 
-const buildDietItemsFromQueries = async (queries: MealQueryArgs[]): Promise<DietItem[]> => {
+const buildDietItemsFromQueries = async (
+  queries: MealQueryArgs[]
+): Promise<{ dietItems: DietItem[]; popupDetails: MealRecipePopupDetail[] }> => {
   const dietItems: DietItem[] = [];
+  const popupDetails: MealRecipePopupDetail[] = [];
 
   for (const query of queries) {
+    const baseNote = formatMacroNote(query);
     try {
       const { recipes, usedFallback } = await fetchRecipesWithFallback(query);
 
       if (recipes.length === 0) {
+        const items = "No matching recipes found";
         dietItems.push({
           meal: query.meal,
-          items: "No matching recipes found",
-          notes: formatMacroNote(query),
+          items,
+          notes: baseNote,
+        });
+        popupDetails.push({
+          meal: query.meal,
+          items,
+          notes: baseNote,
+          recipes: [],
         });
         continue;
       }
 
       const titles = recipes.slice(0, 3).map((recipe) => recipe.title).filter(Boolean);
+      const notes = usedFallback
+        ? `${baseNote} (showing closest available matches)`
+        : baseNote;
+      const items = titles.join(", ");
+
       dietItems.push({
         meal: query.meal,
-        items: titles.join(", "),
-        notes: usedFallback
-          ? `${formatMacroNote(query)} (showing closest available matches)`
-          : formatMacroNote(query),
+        items,
+        notes,
+      });
+      popupDetails.push({
+        meal: query.meal,
+        items,
+        notes,
+        recipes,
       });
     } catch (error) {
       console.error(`Diet recipe fetch failed for meal "${query.meal}"`, error);
+      const items = "Unable to fetch recipes right now";
       dietItems.push({
         meal: query.meal,
-        items: "Unable to fetch recipes right now",
-        notes: formatMacroNote(query),
+        items,
+        notes: baseNote,
       });
     }
   }
 
-  return dietItems;
+  return { dietItems, popupDetails };
 };
 
 const persistDietItems = async (userId: string, items: DietItem[]) => {
@@ -287,6 +321,62 @@ const persistDietItems = async (userId: string, items: DietItem[]) => {
   `;
 };
 
+const replaceDietRecipeDetails = async (
+  userId: string,
+  details: MealRecipePopupDetail[]
+) => {
+  await prisma.$transaction(async (tx) => {
+    await tx.dietRecipeDetail.deleteMany({
+      where: { userId },
+    });
+
+    if (details.length === 0) {
+      return;
+    }
+
+    await tx.dietRecipeDetail.createMany({
+      data: details.map((detail) => ({
+        userId,
+        meal: detail.meal,
+        mealKey: normalizeMealKey(detail.meal),
+        items: detail.items,
+        notes: detail.notes,
+        recipes: JSON.parse(JSON.stringify(detail.recipes)) as Prisma.InputJsonValue,
+      })),
+    });
+  });
+};
+
+const upsertMealRecipeDetails = async (
+  userId: string,
+  meal: string,
+  recipes: RecipeResult[]
+) => {
+  const mealKey = normalizeMealKey(meal);
+  if (!mealKey) return;
+
+  await prisma.dietRecipeDetail.upsert({
+    where: {
+      userId_mealKey: {
+        userId,
+        mealKey,
+      },
+    },
+    update: {
+      meal,
+      recipes: JSON.parse(JSON.stringify(recipes)) as Prisma.InputJsonValue,
+    },
+    create: {
+      userId,
+      meal,
+      mealKey,
+      items: "",
+      notes: "",
+      recipes: JSON.parse(JSON.stringify(recipes)) as Prisma.InputJsonValue,
+    },
+  });
+};
+
 export const aiDietService = {
   parseDietItems,
 
@@ -301,7 +391,9 @@ export const aiDietService = {
 
     const aiMealQueries = await generateMealQueriesFromAi(retrievedContext);
     const mealQueries = ensureAllMealSlots(aiMealQueries);
-    const dietItems = await buildDietItemsFromQueries(mealQueries);
+    const { dietItems, popupDetails } = await buildDietItemsFromQueries(mealQueries);
+
+    await replaceDietRecipeDetails(userId, popupDetails);
 
     if (dietItems.length > 0) {
       await persistDietItems(userId, dietItems);
@@ -314,5 +406,29 @@ export const aiDietService = {
     const latest = await embeddingStoreService.getLatestBySource(userId, "diet");
     if (!latest) return [];
     return parseDietItems(latest.content);
+  },
+
+  async getStoredMealRecipes(userId: string, meal: string): Promise<RecipeResult[] | null> {
+    const mealKey = normalizeMealKey(meal);
+    if (!mealKey) return null;
+
+    const record = await prisma.dietRecipeDetail.findUnique({
+      where: {
+        userId_mealKey: {
+          userId,
+          mealKey,
+        },
+      },
+      select: {
+        recipes: true,
+      },
+    });
+
+    if (!record) return null;
+    return Array.isArray(record.recipes) ? (record.recipes as RecipeResult[]) : [];
+  },
+
+  async cacheMealRecipes(userId: string, meal: string, recipes: RecipeResult[]): Promise<void> {
+    await upsertMealRecipeDetails(userId, meal, recipes);
   },
 };

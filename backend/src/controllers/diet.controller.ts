@@ -56,7 +56,14 @@ export const getMealRecipeDetails = async (
       return res.status(400).json({ message: "Query parameter 'meal' is required" });
     }
 
-    const recipes = await getMealRecipes(meal);
+    const userId = req.user.id;
+    const storedRecipes = await aiDietService.getStoredMealRecipes(userId, meal);
+    if (storedRecipes !== null) {
+      return res.json(storedRecipes);
+    }
+
+    const recipes = await getMealRecipes(meal, { requestMode: "interactive" });
+    await aiDietService.cacheMealRecipes(userId, meal, recipes);
     res.json(recipes);
   } catch (error) {
     next(error);

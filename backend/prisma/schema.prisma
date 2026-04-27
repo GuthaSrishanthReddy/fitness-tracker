@@ -26,6 +26,7 @@ model User {
   fitnessGoal   FitnessGoal
   fitnessLevel  FitnessLevel
   activityType  ActivityType
+  dietRecipeDetails DietRecipeDetail[]
 }
 
 model Trainer {
@@ -132,6 +133,22 @@ model DocumentEmbedding {
   content   String
   embedding Unsupported("vector")
   createdAt DateTime              @default(now())
+}
+
+model DietRecipeDetail {
+  id        String   @id @default(uuid())
+  userId    String
+  meal      String
+  mealKey   String
+  items     String
+  notes     String
+  recipes   Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, mealKey])
+  @@index([userId, createdAt])
 }
 
 enum Role {

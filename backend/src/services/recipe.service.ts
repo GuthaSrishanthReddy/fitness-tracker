@@ -17,6 +17,12 @@ type MealSearchArgs = {
   maxFat: number;
   minProtein: number;
   maxProtein: number;
+  requestMode?: "interactive" | "background";
+};
+
+type CacheEntry = {
+  expiresAt: number;
+  data: RecipeResult[];
 };
 
 const createServiceError = (
@@ -33,6 +39,9 @@ const createServiceError = (
 };
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const mealResultsCache = new Map<string, CacheEntry>();
+const CACHE_TTL_MS = 10 * 60 * 1000;
+const EMPTY_CACHE_TTL_MS = 2 * 60 * 1000;
 
 const parseRetryAfterSeconds = (value: unknown): number | undefined => {
   if (typeof value === "number" && Number.isFinite(value) && value > 0) {
@@ -238,10 +247,28 @@ export const getMeals = async ({
   maxFat,
   minProtein,
   maxProtein,
+  requestMode = "background",
 }: MealSearchArgs): Promise<RecipeResult[]> => {
   validateInputs(meal, maxFat, minProtein, maxProtein);
   const trimmedMeal = meal.trim();
-  const searchQueries = getRecipeSearchQueries(trimmedMeal);
+  const allSearchQueries = getRecipeSearchQueries(trimmedMeal);
+  const searchQueries =
+    requestMode === "interactive" ? allSearchQueries.slice(0, 2) : allSearchQueries;
+  const timeoutMs = requestMode === "interactive" ? 4000 : REQUEST_TIMEOUT_MS;
+  const maxRetries = requestMode === "interactive" ? 0 : MAX_RETRIES;
+  const perQueryResultCount = requestMode === "interactive" ? 3 : 5;
+  const cacheKey = JSON.stringify({
+    meal: trimmedMeal.toLowerCase(),
+    maxFat,
+    minProtein,
+    maxProtein,
+    mode: requestMode,
+  });
+
+  const cached = mealResultsCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.data;
+  }
 
   const headers = {
     "x-api-key": env.SPOONACULAR_API_KEY,
@@ -256,24 +283,24 @@ export const getMeals = async ({
       minProtein,
       maxProtein,
       addRecipeInformation: true,
-      number: 5,
+      number: perQueryResultCount,
     };
 
     let response: AxiosResponse<SpoonacularComplexSearchResponse> | null = null;
 
-    for (let attempt = 0; attempt <= MAX_RETRIES; attempt += 1) {
+    for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
       try {
         response = await axios.get<SpoonacularComplexSearchResponse>(
           SPOONACULAR_URL,
           {
             headers,
             params,
-            timeout: REQUEST_TIMEOUT_MS,
+            timeout: timeoutMs,
           }
         );
         break;
       } catch (error) {
-        const canRetry = isRetryableSpoonacularError(error) && attempt < MAX_RETRIES;
+        const canRetry = isRetryableSpoonacularError(error) && attempt < maxRetries;
         if (!canRetry) {
           throw normalizeSpoonacularError(error);
         }
@@ -302,9 +329,14 @@ export const getMeals = async ({
         inputMeal: trimmedMeal,
         query: searchQuery,
         count: recipes.length,
+        requestMode,
       });
     }
 
+    mealResultsCache.set(cacheKey, {
+      data: recipes,
+      expiresAt: Date.now() + CACHE_TTL_MS,
+    });
     return recipes;
   }
 
@@ -312,13 +344,21 @@ export const getMeals = async ({
     console.log("Spoonacular recipes fetched none:", {
       inputMeal: trimmedMeal,
       attemptedQueries: searchQueries,
+      requestMode,
     });
   }
 
+  mealResultsCache.set(cacheKey, {
+    data: [],
+    expiresAt: Date.now() + EMPTY_CACHE_TTL_MS,
+  });
   return [];
 };
 
-export const getMealRecipes = async (meal: string): Promise<RecipeResult[]> => {
+export const getMealRecipes = async (
+  meal: string,
+  options?: { requestMode?: "interactive" | "background" }
+): Promise<RecipeResult[]> => {
   const DEFAULT_MAX_FAT = 120;
   const DEFAULT_MIN_PROTEIN = 0;
   const DEFAULT_MAX_PROTEIN = 250;
@@ -328,5 +368,6 @@ export const getMealRecipes = async (meal: string): Promise<RecipeResult[]> => {
     maxFat: DEFAULT_MAX_FAT,
     minProtein: DEFAULT_MIN_PROTEIN,
     maxProtein: DEFAULT_MAX_PROTEIN,
+    requestMode: options?.requestMode ?? "interactive",
   });
 };
