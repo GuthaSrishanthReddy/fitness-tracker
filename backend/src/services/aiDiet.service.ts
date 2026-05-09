@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { Prisma } from "@prisma/client";
 import { prisma } from "../config/db";
+import { env } from "../config/env";
 import { createEmbedding } from "./embedding.service";
 import { embeddingStoreService } from "./embeddingStore.service";
 import { model } from "./model.service";
@@ -197,6 +198,9 @@ const fetchRecipesWithFallback = async (query: MealQueryArgs) => {
 
   const relaxedRecipes = await getMealRecipes(query.meal, {
     requestMode: "background",
+    maxFat: Math.max(10, Math.ceil(query.maxFat / 2)),
+    minProtein: Math.max(5, Math.floor(query.minProtein / 2)),
+    maxProtein: query.maxProtein,
   });
   return {
     recipes: relaxedRecipes,
@@ -229,7 +233,9 @@ ${context || "none"}
 
   const result = await model.generateContent(prompt);
   const raw = result.response.text().trim();
-  console.log("RAW_DIET_MEAL_QUERY_RESPONSE:", raw);
+  if (env.NODE_ENV !== "production") {
+    console.log("RAW_DIET_MEAL_QUERY_RESPONSE:", raw);
+  }
 
   let mealQueries = parseMealQueries(raw);
   if (mealQueries.length > 0) return mealQueries;
@@ -239,10 +245,15 @@ Return ONLY valid JSON array in this exact shape:
 [
   { "meal": "Breakfast", "maxFat": 20, "minProtein": 15, "maxProtein": 25 }
 ]
-No prose. No markdown.`;
+No prose. No markdown.
+
+User context:
+${context || "none"}`;
   const retry = await model.generateContent(retryPrompt);
   const retryRaw = retry.response.text().trim();
-  console.log("RAW_DIET_MEAL_QUERY_RETRY:", retryRaw);
+  if (env.NODE_ENV !== "production") {
+    console.log("RAW_DIET_MEAL_QUERY_RETRY:", retryRaw);
+  }
 
   mealQueries = parseMealQueries(retryRaw);
   return mealQueries.length > 0 ? mealQueries : DEFAULT_MEAL_QUERIES;
@@ -251,28 +262,26 @@ No prose. No markdown.`;
 const buildDietItemsFromQueries = async (
   queries: MealQueryArgs[]
 ): Promise<{ dietItems: DietItem[]; popupDetails: MealRecipePopupDetail[] }> => {
-  const dietItems: DietItem[] = [];
-  const popupDetails: MealRecipePopupDetail[] = [];
-
-  for (const query of queries) {
+  const results = await Promise.all(queries.map(async (query) => {
     const baseNote = formatMacroNote(query);
     try {
       const { recipes, usedFallback } = await fetchRecipesWithFallback(query);
 
       if (recipes.length === 0) {
         const items = "No matching recipes found";
-        dietItems.push({
-          meal: query.meal,
-          items,
-          notes: baseNote,
-        });
-        popupDetails.push({
-          meal: query.meal,
-          items,
-          notes: baseNote,
-          recipes: [],
-        });
-        continue;
+        return {
+          dietItem: {
+            meal: query.meal,
+            items,
+            notes: baseNote,
+          },
+          popupDetail: {
+            meal: query.meal,
+            items,
+            notes: baseNote,
+            recipes: [],
+          },
+        };
       }
 
       const titles = recipes.slice(0, 3).map((recipe) => recipe.title).filter(Boolean);
@@ -281,29 +290,38 @@ const buildDietItemsFromQueries = async (
         : baseNote;
       const items = titles.join(", ");
 
-      dietItems.push({
-        meal: query.meal,
-        items,
-        notes,
-      });
-      popupDetails.push({
-        meal: query.meal,
-        items,
-        notes,
-        recipes,
-      });
+      return {
+        dietItem: {
+          meal: query.meal,
+          items,
+          notes,
+        },
+        popupDetail: {
+          meal: query.meal,
+          items,
+          notes,
+          recipes,
+        },
+      };
     } catch (error) {
       console.error(`Diet recipe fetch failed for meal "${query.meal}"`, error);
       const items = "Unable to fetch recipes right now";
-      dietItems.push({
-        meal: query.meal,
-        items,
-        notes: baseNote,
-      });
+      return {
+        dietItem: {
+          meal: query.meal,
+          items,
+          notes: baseNote,
+        },
+      };
     }
-  }
+  }));
 
-  return { dietItems, popupDetails };
+  return {
+    dietItems: results.map((result) => result.dietItem),
+    popupDetails: results
+      .map((result) => result.popupDetail)
+      .filter((detail): detail is MealRecipePopupDetail => Boolean(detail)),
+  };
 };
 
 const persistDietItems = async (userId: string, items: DietItem[]) => {
@@ -344,7 +362,7 @@ const replaceDietRecipeDetails = async (
         mealKey: normalizeMealKey(detail.meal),
         items: detail.items,
         notes: detail.notes,
-        recipes: JSON.parse(JSON.stringify(detail.recipes)) as Prisma.InputJsonValue,
+        recipes: detail.recipes as unknown as Prisma.InputJsonValue,
       })),
     });
   });
@@ -367,7 +385,7 @@ const upsertMealRecipeDetails = async (
     },
     update: {
       meal,
-      recipes: JSON.parse(JSON.stringify(recipes)) as Prisma.InputJsonValue,
+      recipes: recipes as unknown as Prisma.InputJsonValue,
     },
     create: {
       userId,
@@ -375,7 +393,7 @@ const upsertMealRecipeDetails = async (
       mealKey,
       items: "",
       notes: "",
-      recipes: JSON.parse(JSON.stringify(recipes)) as Prisma.InputJsonValue,
+      recipes: recipes as unknown as Prisma.InputJsonValue,
     },
   });
 };
@@ -399,7 +417,9 @@ export const aiDietService = {
     await replaceDietRecipeDetails(userId, popupDetails);
 
     if (dietItems.length > 0) {
-      await persistDietItems(userId, dietItems);
+      persistDietItems(userId, dietItems).catch((err) =>
+        console.error("Failed to persist diet embedding:", err)
+      );
     }
 
     return dietItems;

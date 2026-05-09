@@ -58,7 +58,7 @@ export const getMealRecipeDetails = async (
 
     const userId = req.user.id;
     const storedRecipes = await aiDietService.getStoredMealRecipes(userId, meal);
-    if (storedRecipes !== null) {
+    if (storedRecipes !== null && storedRecipes.length > 0) {
       return res.json(storedRecipes);
     }
 

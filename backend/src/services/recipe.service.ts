@@ -312,22 +312,47 @@ export const getMeals = async ({
     return response?.data ?? null;
   };
 
-  for (const searchQuery of searchQueries) {
-    const payload = await fetchForQuery(searchQuery);
-    if (!payload) {
-      throw createServiceError("Unable to fetch recipes right now.", 503);
-    }
+  const firstQuery = searchQueries[0];
+  const firstPayload = await fetchForQuery(firstQuery);
+  if (!firstPayload) {
+    throw createServiceError("Unable to fetch recipes right now.", 503);
+  }
 
-    const rawResults = Array.isArray(payload.results) ? payload.results : [];
-    if (rawResults.length === 0) {
-      continue;
-    }
+  let hit = {
+    query: firstQuery,
+    payload: firstPayload,
+  };
+  let rawResults = Array.isArray(firstPayload.results) ? firstPayload.results : [];
 
+  if (rawResults.length === 0 && searchQueries.length > 1) {
+    const rest = await Promise.all(
+      searchQueries.slice(1).map(async (searchQuery) => ({
+        query: searchQuery,
+        payload: await fetchForQuery(searchQuery),
+      }))
+    );
+    const firstHit = rest.find(
+      (result) =>
+        result.payload &&
+        Array.isArray(result.payload.results) &&
+        result.payload.results.length > 0
+    );
+
+    if (firstHit?.payload) {
+      hit = {
+        query: firstHit.query,
+        payload: firstHit.payload,
+      };
+      rawResults = firstHit.payload.results;
+    }
+  }
+
+  if (rawResults.length > 0) {
     const recipes = rawResults.map(mapRecipe);
     if (env.NODE_ENV !== "production") {
       console.log("Spoonacular recipes fetched:", {
         inputMeal: trimmedMeal,
-        query: searchQuery,
+        query: hit.query,
         count: recipes.length,
         requestMode,
       });
@@ -357,17 +382,27 @@ export const getMeals = async ({
 
 export const getMealRecipes = async (
   meal: string,
-  options?: { requestMode?: "interactive" | "background" }
+  options?: {
+    requestMode?: "interactive" | "background";
+    maxFat?: number;
+    minProtein?: number;
+    maxProtein?: number;
+  }
 ): Promise<RecipeResult[]> => {
   const DEFAULT_MAX_FAT = 120;
   const DEFAULT_MIN_PROTEIN = 0;
   const DEFAULT_MAX_PROTEIN = 250;
+  const minProtein = options?.minProtein ?? DEFAULT_MIN_PROTEIN;
+  const maxProtein = Math.max(
+    minProtein,
+    options?.maxProtein ?? DEFAULT_MAX_PROTEIN
+  );
 
   return getMeals({
     meal,
-    maxFat: DEFAULT_MAX_FAT,
-    minProtein: DEFAULT_MIN_PROTEIN,
-    maxProtein: DEFAULT_MAX_PROTEIN,
+    maxFat: options?.maxFat ?? DEFAULT_MAX_FAT,
+    minProtein,
+    maxProtein,
     requestMode: options?.requestMode ?? "interactive",
   });
 };
