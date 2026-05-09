@@ -20,13 +20,14 @@ cd backend
 npm install
 ```
 
-2. Create backend env file:
+2. Create the root env file:
 ```bash
-# backend/.env
+# .env
 PORT=5000
 DATABASE_URL=postgresql://...
 JWT_SECRET=your-secret
 GOOGLE_API_KEY=your-google-api-key
+SPOONACULAR_API_KEY=your-spoonacular-api-key
 ```
 
 3. Generate Prisma client and run migrations:
@@ -55,7 +56,7 @@ Frontend uses:
 
 If frontend and backend run on different origins in development, set:
 ```bash
-# frontend/.env
+# .env
 VITE_API_BASE_URL=http://localhost:5000/api
 ```
 

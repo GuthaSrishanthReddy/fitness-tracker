@@ -8,6 +8,7 @@ import { errorHandler } from "./middleware/error.middleware";
 import routes from "./routes/index";
 
 const app = express();
+const API_BASE_PATH = "/api";
 
 /* -------------------- Global Middleware -------------------- */
 
@@ -26,7 +27,7 @@ app.use(morgan("dev"));
 
 /* -------------------- Health Check -------------------- */
 
-app.get("/health", (_req, res) => {
+app.get(`${API_BASE_PATH}/health`, (_req, res) => {
   res.status(200).json({
     status: "ok",
     message: "Fitness Tracker API is running",
@@ -35,7 +36,7 @@ app.get("/health", (_req, res) => {
 
 /* -------------------- API Routes -------------------- */
 
-app.use("/api", routes);
+app.use(API_BASE_PATH, routes);
 
 /* -------------------- 404 Handler -------------------- */
 

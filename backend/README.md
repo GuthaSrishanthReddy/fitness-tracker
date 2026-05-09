@@ -12,13 +12,14 @@ Express + Prisma API for the fitness tracker.
 
 ## Required Environment Variables
 
-Create `backend/.env`:
+Create `.env` in the repo root:
 
 ```bash
 PORT=5000
 DATABASE_URL=postgresql://...
 JWT_SECRET=your-secret
 GOOGLE_API_KEY=your-google-api-key
+SPOONACULAR_API_KEY=your-spoonacular-api-key
 ```
 
 These are enforced in `src/config/env.ts`.
@@ -52,7 +53,7 @@ All routes are mounted under:
 
 Health check:
 
-`GET /health`
+`GET /api/health`
 
 ## Route Groups
 

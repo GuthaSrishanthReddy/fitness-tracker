@@ -37,7 +37,7 @@ API base behavior is defined in `src/services/api.ts`:
 If backend runs on `http://localhost:5000`:
 
 ```bash
-# frontend/.env
+# .env in the repo root
 VITE_API_BASE_URL=http://localhost:5000/api
 ```
 
