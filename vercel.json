@@ -5,6 +5,10 @@
   "outputDirectory": "frontend/dist",
   "routes": [
     {
+      "src": "/api/(.*)",
+      "dest": "/api/index.js?path=$1"
+    },
+    {
       "handle": "filesystem"
     },
     {
@@ -13,7 +17,7 @@
     }
   ],
   "functions": {
-    "api/[...path].js": {
+    "api/index.js": {
       "includeFiles": "backend/**"
     }
   }
