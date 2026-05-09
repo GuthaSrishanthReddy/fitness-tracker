@@ -4,7 +4,9 @@
       "Bash(Get-ChildItem -Path \"c:\\\\CODING FILES\\\\fitness-tracker\" -Recurse -Directory)",
       "Bash(Select-Object -ExpandProperty FullName)",
       "Bash(Sort-Object)",
-      "Bash(xargs grep -l \"Spoonacular\\\\|recipe\\\\|meal\")"
+      "Bash(xargs grep -l \"Spoonacular\\\\|recipe\\\\|meal\")",
+      "Bash(Get-ChildItem -Path \"c:\\\\CODING FILES\\\\fitness-tracker\" -Force)",
+      "Bash(Select-Object Name)"
     ]
   }
 }
