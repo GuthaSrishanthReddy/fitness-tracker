@@ -4,7 +4,6 @@ import path from "path";
 dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
 
 const requiredEnv = [
-  "PORT",
   "DATABASE_URL",
   "JWT_SECRET",
   "GOOGLE_API_KEY",
@@ -19,7 +18,7 @@ requiredEnv.forEach((key) => {
 });
 
 export const env = {
-  PORT: Number(process.env.PORT),
+  PORT: Number(process.env.PORT ?? 5000),
   DATABASE_URL: process.env.DATABASE_URL as string,
   JWT_SECRET: process.env.JWT_SECRET as string,
   NODE_ENV: process.env.NODE_ENV || "development",
