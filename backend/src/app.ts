@@ -10,6 +10,8 @@ import routes from "./routes/index";
 const app = express();
 const API_BASE_PATH = "/api";
 
+app.set("trust proxy", 1);
+
 /* -------------------- Global Middleware -------------------- */
 
 // CORS
