@@ -1,14 +1,26 @@
+import { createServer } from "http";
 import app from "./app";
 import { env } from "./config/env";
 import { prisma } from "./config/db";
-
+import { initializeSocket } from "./config/socket";
+import { setupSocketEvents } from "./config/socketEvents";
 
 const PORT = env.PORT;
 
+/* -------------------- Create HTTP Server -------------------- */
+
+const httpServer = createServer(app);
+
+/* -------------------- Initialize Socket.IO -------------------- */
+
+initializeSocket(httpServer);
+setupSocketEvents();
+
 /* -------------------- Start Server -------------------- */
 
-const server = app.listen(PORT, () => {
+const server = httpServer.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`📡 WebSocket enabled for real-time messaging`);
 });
 
 /* -------------------- Graceful Shutdown -------------------- */

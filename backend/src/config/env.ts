@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
+import path from "path";
 
-dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
 
 const requiredEnv = [
   "DATABASE_URL",
@@ -23,4 +24,5 @@ export const env = {
   NODE_ENV: process.env.NODE_ENV || "development",
   GOOGLE_API_KEY: process.env.GOOGLE_API_KEY as string,
   SPOONACULAR_API_KEY: process.env.SPOONACULAR_API_KEY as string,
+  FRONTEND_URL: process.env.FRONTEND_URL,
 };
