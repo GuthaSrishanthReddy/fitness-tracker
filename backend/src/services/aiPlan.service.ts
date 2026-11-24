@@ -347,25 +347,45 @@ export const aiPlanService = {
     );
     const compactContext = compactPlanContext(retrievedContext || "none");
 
+    const profileContext = `User profile: fitnessGoal=${user.fitnessGoal}; activityType=${user.activityType}; fitnessLevel=${user.fitnessLevel}.`;
+
     const prompt = `
-Return ONLY valid JSON in this exact schema:
-${planTemplate}
+You are an evidence-based fitness coach creating a safe, practical 7-day workout plan.
 
-Rules:
-- Return a flat JSON array of workout items.
-- Use keys exactly: "day", "focus", "name", "sets", "reps".
-- One object = one workout.
-- Return exactly 7 calendar days total.
-- Training-day workout count must match workoutDuration: <=45 min -> 4 workouts, 46-70 min -> 5 workouts, >70 min -> 6 workouts.
-- Non-training days must still appear with { "day": "<weekday>", "focus": "Rest", "name": "", "sets": "", "reps": "" }.
-- Read "workoutFrequency" and "workoutDuration" from user context.
-- Training days in the week must equal workoutFrequency (cap to 1-7).
-- Keep exercise choice aligned with user goal and level from context.
-- If context is missing, return a safe beginner 3-day full-body plan + rest days.
-- No markdown, no code fences, no commentary, no explanation text.
-- Do not stop early. Finish the full JSON array.
+Return ONLY valid JSON with this exact top-level structure:
+${JSON.stringify(planTemplate)}
 
-User context:
+Output rules:
+- Return an array containing exactly the 7 English calendar days: Monday through Sunday, in that order.
+- Each day object must use exactly: "day", "focus", "workouts".
+- Every training day must have a clear focus and a "workouts" array.
+- Rest days must use: {"day":"<weekday>","focus":"Rest","workouts":[]}.
+- Every exercise object must use exactly: "workoutName", "setsReps", "notes".
+- Do not use separate flat fields such as "name", "sets", or "reps".
+- Use short, real exercise names and realistic sets/reps (for example: "3 x 8-12").
+- Keep "notes" brief and execution-focused.
+
+Personalization rules:
+- Use the user's goal, activity type, fitness level, workout frequency, workout duration, progress, constraints, and prior plan found below.
+- Training days must equal the user's workoutFrequency, rounded/clamped to 1-7. If missing or unusable, use 3 beginner training days.
+- On each training day, choose 4 exercises for <=45 minutes, 5 exercises for 46-70 minutes, or 6 exercises for >70 minutes.
+- Spread muscle groups and schedule rest/recovery days sensibly. For 3 or more consecutive training days, include varied movements and at least one easier recovery day.
+- Match difficulty to fitnessLevel and goal. Prefer bodyweight or machine substitutes for beginners; avoid advanced compound volume for rehabilitation or pain reports.
+- Do not repeat the exact previous plan. Rotate at least two exercises or rep ranges and add useful progression when appropriate.
+- Never prescribe an unsafe load or assume available equipment. Use common, equipment-independent alternatives when equipment is unknown.
+- If medical pain, injury, dizziness, or contraindications are mentioned, exclude affected movements and prioritize recovery. This is general fitness guidance, not medical diagnosis.
+
+Before returning, verify:
+- 7 distinct days are present in Monday-Sunday order.
+- Training-day count matches workoutFrequency (or defaults to 3).
+- Training-day exercise counts match workoutDuration.
+- No commentary, markdown, code fences, or extra keys exist.
+- The JSON is complete and valid.
+
+User profile:
+${profileContext}
+
+Latest progress and previous plan context:
 ${compactContext}
 `;
 
@@ -398,17 +418,26 @@ ${compactContext}
     // Retry with minimal JSON prompt
     if (planItems.length === 0) {
       const retryPrompt = `
-Return ONLY valid JSON.
-Schema:
-${planTemplate}
+Return ONLY a valid JSON array for Monday through Sunday.
+Use this exact structure:
+[
+  {"day":"Monday","focus":"Push","workouts":[{"workoutName":"Dumbbell Bench Press","setsReps":"3 x 8-12","notes":"Controlled tempo"}]},
+  {"day":"Tuesday","focus":"Rest","workouts":[]}
+]
 
 Strict rules:
-- Return a flat JSON array of workout items.
-- Use keys exactly: "day", "focus", "name", "sets", "reps".
-- Return exactly 7 calendar days total.
-- Non-training days must appear with empty "name", "sets", and "reps".
-- Use short exercise names and short numeric strings only.
-- No markdown, no prose, no comments, no code fences.
+- Include exactly 7 objects, one for every calendar day Monday-Sunday.
+- Use exactly "day", "focus", "workouts" for day objects.
+- Use exactly "workoutName", "setsReps", "notes" for exercise objects.
+- Rest days must have an empty workouts array.
+- Match workoutFrequency and workoutDuration from this context.
+- Keep exercise choices appropriate for the user's goal and fitness level.
+- No markdown, prose, comments, code fences, or extra keys.
+
+User profile:
+${profileContext}
+Latest progress and previous plan context:
+${compactContext}
 `;
       try {
         const result = await generatePlanContent(retryPrompt, { maxOutputTokens: 450, timeoutMs: 20000, temperature: 0.05 });
@@ -428,18 +457,23 @@ Strict rules:
     // Final retry with plain text format
     if (planItems.length === 0) {
       const finalRetryPrompt = `
-Return plain text only.
-Use exactly one line per workout or rest day in this format:
-day|focus|name|sets|reps|notes
+Return plain text only for a safe 7-day workout plan.
+Use exactly one line per exercise or rest day:
+day|focus|workoutName|setsReps|notes
 
 Rules:
-- Return exactly 7 calendar days total.
-- Use one line per workout for training days.
-- For rest days return: day|Rest||||
-- No JSON.
-- No markdown.
-- No explanations.
-- Use short values only.
+- Return exactly 7 calendar days Monday through Sunday.
+- Include every training day and rest day.
+- Match workoutFrequency and workoutDuration from the context.
+- Use one exercise line per exercise on training days.
+- For rest days return exactly: day|Rest||
+- No JSON, markdown, headings, bullets, or explanations.
+- Keep names and notes short.
+
+User profile:
+${profileContext}
+Latest progress and previous plan context:
+${compactContext}
 `;
       try {
         const result = await generatePlanContent(finalRetryPrompt, {
