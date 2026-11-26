@@ -12,7 +12,12 @@ export const userService = {
         id: true,
         email: true,
         name: true,
-        role: true
+        role: true,
+        fitnessGoal: true,
+        fitnessLevel: true,
+        activityType: true,
+        complianceScore: true,
+        createdAt: true
       }
     });
   },
